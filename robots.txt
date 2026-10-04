@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /seccion/
+Allow: /noticia/
+Allow: /archivo
+Allow: /noticia-semana
+Allow: /static/
+
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /api/admin/
+
+Sitemap: https://sextopoderbolivia.com/sitemap.xml

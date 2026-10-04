@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Archivo Histórico • Sexto Poder Bolivia{% endblock %}
+
+{% block content %}
+<main class="container archivo-container">
+    <div class="archivo-header">
+        <h1><i class="fas fa-archive" style="color: var(--blue-accent);"></i> Archivo Histórico</h1>
+        <p class="subtitle">Busca en todas nuestras notas publicadas</p>
+    </div>
+    
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por título o sección...">
+    </div>
+    
+    <div class="archivo-grid" id="archivoGrid">
+        {% for n in noticias %}
+        <article class="archivo-card" data-titulo="{{ n.titulo|lower }}" data-seccion="{{ n.seccion|lower }}" onclick="location.href='/noticia/{{ n.id }}'">
+            {% if n.imagen %}
+            <div class="archivo-card-image"><img src="{{ n.imagen }}" alt="{{ n.titulo }}" loading="lazy"></div>
+            {% endif %}
+            <div class="archivo-card-content">
+                <span class="archivo-card-badge">{{ n.seccion|replace('-', ' ')|title }}</span>
+                <h3 class="archivo-card-title">{{ n.titulo }}</h3>
+                {% if n.resumen %}<p class="archivo-card-resumen">{{ n.resumen[:120] }}...</p>{% endif %}
+                <div class="archivo-card-footer"><i class="far fa-calendar"></i> {{ n.fecha }}</div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    
+    <div id="noResults" style="display: none; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
+        <h3>No se encontraron resultados</h3>
+    </div>
+
+    {% if pagination and pagination.pages > 1 %}
+    <nav style="margin: 48px 0; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+        {% if pagination.has_prev %}<a href="/archivo?page={{ pagination.prev_num }}" class="back-link"><i class="fas fa-chevron-left"></i> Anterior</a>{% endif %}
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                <span class="seccion-card-badge" style="padding: 10px 16px; background: var(--blue-accent); color: white;">{{ page_num }}</span>
+                {% else %}
+                <a href="/archivo?page={{ page_num }}" class="back-link" style="background: var(--bg-card);">{{ page_num }}</a>
+                {% endif %}
+            {% else %}<span style="color: var(--text-muted); padding: 0 8px;">…</span>{% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}<a href="/archivo?page={{ pagination.next_num }}" class="back-link">Siguiente <i class="fas fa-chevron-right"></i></a>{% endif %}
+    </nav>
+    {% endif %}
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('searchInput');
+    const cards = document.querySelectorAll('.archivo-card');
+    const noResults = document.getElementById('noResults');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase().trim();
+            let visibleCount = 0;
+            cards.forEach(card => {
+                const match = (card.dataset.titulo || '').includes(term) || (card.dataset.seccion || '').includes(term);
+                card.style.display = match ? 'block' : 'none';
+                if (match) visibleCount++;
+            });
+            if (noResults) noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+        });
+    }
+});
+</script>
+{% endblock %}

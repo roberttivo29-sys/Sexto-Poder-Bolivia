@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ seccion|replace('-', ' ')|title }} • Sexto Poder Bolivia{% endblock %}
+{% block description %}Todas las noticias de {{ seccion|replace('-', ' ')|title }} en Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.{% endblock %}
+{% block body_class %}seccion-{{ seccion }}{% endblock %}
+
+{% block content %}
+<main class="container" id="main-content">
+    
+    <header class="section-hero">
+        <h1 class="section-title">
+            <i class="fas fa-folder-open" style="color: var(--blue-accent); margin-right: 12px;"></i>
+            {{ seccion|replace('-', ' ')|title }}
+        </h1>
+        <p style="color: var(--text-muted); margin-top: 12px; font-size: 1.1rem;">
+            {% if pagination %}
+                Mostrando {{ (pagination.page - 1) * 6 + 1 }} - {{ pagination.page * 6 if pagination.page * 6 < pagination.total else pagination.total }} de {{ pagination.total }} notas
+            {% else %}
+                {{ noticias|length }} notas publicadas
+            {% endif %}
+        </p>
+    </header>
+    
+    {% if noticias %}
+    <div class="news-grid">
+        {% for n in noticias %}
+        <article class="news-card" onclick="location.href='/noticia/{{ n.id }}'" style="cursor: pointer;">
+            {% if n.imagen %}
+            <div class="news-card-image">
+                <img src="{{ n.imagen }}" alt="{{ n.titulo }}" loading="lazy">
+                {% if n.video_corto %}
+                <span class="video-tag"><i class="fas fa-play"></i> VIDEO</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="news-card-content">
+                <span class="seccion-card-badge">
+                    <i class="fas fa-tag"></i> {{ n.categoria or seccion|replace('-', ' ')|title }}
+                </span>
+                <h4>{{ n.titulo }}</h4>
+                {% if n.resumen %}
+                <p class="card-resumen">{{ n.resumen[:120] }}{% if n.resumen|length > 120 %}...{% endif %}</p>
+                {% endif %}
+                <div class="card-date">
+                    <i class="far fa-calendar"></i> <time>{{ n.fecha }}</time>
+                    {% if n.autor %}
+                    <span style="margin-left: 8px;"><i class="far fa-user"></i> {{ n.autor }}</span>
+                    {% else %}
+                    <span style="margin-left: 8px;"><i class="far fa-user"></i> Redacción</span>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    
+    {% if pagination and pagination.pages > 1 %}
+    <nav class="pagination-container" style="margin: 48px 0; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap;">
+        {% if pagination.has_prev %}
+        <a href="/seccion/{{ seccion }}?page={{ pagination.prev_num }}" class="back-link" style="padding: 10px 20px;">
+            <i class="fas fa-chevron-left"></i> Anterior
+        </a>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                <span class="seccion-card-badge" style="padding: 10px 16px; font-size: 0.9rem; background: var(--blue-accent); color: white; cursor: default;">
+                    {{ page_num }}
+                </span>
+                {% else %}
+                <a href="/seccion/{{ seccion }}?page={{ page_num }}" class="back-link" style="padding: 10px 16px; background: var(--bg-card); border: 1px solid var(--border-light); color: var(--text-primary);">
+                    {{ page_num }}
+                </a>
+                {% endif %}
+            {% else %}
+            <span style="color: var(--text-muted); padding: 0 8px;">…</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <a href="/seccion/{{ seccion }}?page={{ pagination.next_num }}" class="back-link" style="padding: 10px 20px;">
+            Siguiente <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+    
+    {% else %}
+    <div style="text-align: center; padding: 80px 20px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-light); margin: 40px 0;">
+        <i class="far fa-newspaper" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 20px; opacity: 0.5;"></i>
+        <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: var(--text-primary); margin-bottom: 12px;">No hay noticias aún</h3>
+        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px;">Próximamente más contenido sobre {{ seccion|replace('-', ' ')|title }}.</p>
+        <a href="/" class="btn-read-more" style="display: inline-flex;"><i class="fas fa-home"></i> Volver al Inicio</a>
+    </div>
+    {% endif %}
+    
+</main>
+{% endblock %}

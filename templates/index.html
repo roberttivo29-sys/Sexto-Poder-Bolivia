@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Sexto Poder Bolivia | Periodismo Independiente{% endblock %}
+{% block description %}Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.{% endblock %}
+
+{% block content %}
+<main class="container" id="main-content">
+    
+    <!-- Barra de Ticker TITULARES -->
+    {% if ticker %}
+    <div class="breaking-news-bar">
+        <div class="breaking-label">
+            <span class="indicator"></span> TITULARES
+        </div>
+        <div class="breaking-ticker">
+            <div class="ticker-content">
+                {% for t in ticker %}
+                <a href="/noticia/{{ t.id }}" class="ticker-item">{{ t.titulo }}</a>
+                {% endfor %}
+                {% for t in ticker %}
+                <a href="/noticia/{{ t.id }}" class="ticker-item">{{ t.titulo }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Layout Principal: 2 columnas equilibradas -->
+    <div class="main-layout">
+        
+        <!-- COLUMNA IZQUIERDA: Hero + Semana + Recomendadas -->
+        <div class="column-left">
+            
+            <!-- Hero Principal -->
+            {% if hero %}
+            <a href="/noticia/{{ hero.id }}" class="hero-section">
+                <div class="hero-image">
+                    <img src="{{ hero.imagen or 'https://placehold.co/800x450/0f172a/FFF?text=Sexto+Poder' }}" alt="{{ hero.titulo }}" loading="eager">
+                </div>
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <span class="seccion-card-badge">{{ hero.seccion|replace('-', ' ')|title }}</span>
+                    <h2>{{ hero.titulo }}</h2>
+                    {% if hero.resumen %}
+                    <p class="lead">{{ hero.resumen[:150] }}...</p>
+                    {% endif %}
+                    <span class="btn-read-more">Leer nota completa <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- Noticia de la Semana (Extendida) -->
+            {% if noticia_semana %}
+            <a href="/noticia-semana" class="noticia-semana-widget">
+                <div class="noticia-semana-header">
+                    <i class="fas fa-star"></i> Noticia de la Semana
+                </div>
+                <div class="noticia-semana-body">
+                    {% if noticia_semana.imagen %}
+                    <div class="noticia-semana-image">
+                        <img src="{{ noticia_semana.imagen }}" alt="{{ noticia_semana.titulo }}" loading="lazy">
+                    </div>
+                    {% endif %}
+                    <div class="noticia-semana-content">
+                        <h3>{{ noticia_semana.titulo }}</h3>
+                        {% if noticia_semana.resumen %}
+                        <p>{{ noticia_semana.resumen[:150] }}...</p>
+                        {% endif %}
+                        <span class="btn-leer-mas">Leer seguimiento completo <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- INNOVACIÓN: También te puede interesar (Llena cualquier espacio restante) -->
+            {% if recomendadas %}
+            <div class="recomendadas-widget">
+                <div class="recomendadas-header">
+                    <i class="fas fa-compass"></i> También te puede interesar
+                </div>
+                <div class="recomendadas-list">
+                    {% for nota in recomendadas %}
+                    <a href="/noticia/{{ nota.id }}" class="recomendada-item">
+                        {% if nota.imagen %}
+                        <div class="recomendada-image">
+                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="recomendada-content">
+                            <span class="recomendada-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
+                            <h4>{{ nota.titulo }}</h4>
+                            <span class="recomendada-date">
+                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- COLUMNA DERECHA: Últimas + Caricatura + Redes (Solo FB y TikTok) -->
+        <aside class="sidebar">
+            
+            <!-- Últimas Noticias -->
+            {% if ultimas_noticias %}
+            <div class="widget">
+                <h3 class="widget-title">
+                    <i class="fas fa-clock" style="color: var(--blue-accent);"></i> Últimas Noticias
+                </h3>
+                <div class="ultimas-list">
+                    {% for nota in ultimas_noticias %}
+                    <a href="/noticia/{{ nota.id }}" class="ultima-item">
+                        {% if nota.imagen %}
+                        <div class="ultima-item-image">
+                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="ultima-item-content">
+                            <span class="ultima-item-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
+                            <h4>{{ nota.titulo[:60] }}{% if nota.titulo|length > 60 %}...{% endif %}</h4>
+                            <span class="ultima-item-date">
+                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Caricatura Compacta -->
+            {% if caricatura %}
+            <div class="widget cartoon-widget-compact">
+                <h3 class="widget-title">
+                    <i class="fas fa-paint-brush" style="color: var(--gold-accent);"></i> Caricatura
+                </h3>
+                <div class="cartoon-container-compact">
+                    <img src="{{ caricatura.valor or 'https://placehold.co/400x250/1e293b/FFF?text=Caricatura' }}" 
+                         alt="Caricatura del día" 
+                         loading="lazy" 
+                         onclick="openLightbox(this)">
+                </div>
+                {% if caricatura.texto %}
+                <p class="caricatura-caption-compact">{{ caricatura.texto }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Síguenos (SOLO FACEBOOK Y TIKTOK) -->
+            <div class="widget">
+                <h3 class="widget-title">
+                    <i class="fas fa-share-nodes" style="color: var(--blue-accent);"></i> Síguenos
+                </h3>
+                <div class="redes-list">
+                    <a href="https://www.facebook.com/profile.php?id=61589606326280" target="_blank" rel="noopener noreferrer" class="red-item">
+                        <div class="red-icon facebook"><i class="fab fa-facebook-f"></i></div>
+                        <div class="red-info">
+                            <span class="red-name">Facebook</span>
+                            <span class="red-count">Síguenos para más</span>
+                        </div>
+                    </a>
+                    <a href="https://www.tiktok.com/@sexto.poder.boliv" target="_blank" rel="noopener noreferrer" class="red-item">
+                        <div class="red-icon tiktok"><i class="fab fa-tiktok"></i></div>
+                        <div class="red-info">
+                            <span class="red-name">TikTok</span>
+                            <span class="red-count">Videos exclusivos</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- Secciones Destacadas (full width) -->
+    <div class="secciones-destacadas">
+        <div class="section-header">
+            <h2>Explora por Secciones</h2>
+        </div>
+        <div class="secciones-grid">
+            {% for sec in destacadas_principal %}
+            <a href="/seccion/{{ sec.seccion }}" class="seccion-card">
+                <div class="seccion-card-image">
+                    <img src="{{ sec.imagen or 'https://placehold.co/400x250/1e293b/FFF?text=Seccion' }}" 
+                         alt="{{ sec.seccion }}" 
+                         loading="lazy">
+                </div>
+                <div class="seccion-card-content">
+                    <span class="seccion-card-badge">{{ sec.seccion|replace('-', ' ')|title }}</span>
+                    <h4>{{ sec.titulo }}</h4>
+                    <span class="seccion-card-link">Ver todas las notas <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+</main>
+{% endblock %}

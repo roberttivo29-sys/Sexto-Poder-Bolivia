@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ noticia.titulo }} • Sexto Poder Bolivia{% endblock %}
+{% block description %}{{ noticia.resumen | default('Lee esta noticia en Sexto Poder Bolivia.') }}{% endblock %}
+
+{% block content %}
+<main class="container">
+    <article class="article-detail" itemscope itemtype="https://schema.org/NewsArticle">
+        <nav style="margin-bottom: 24px; font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 8px;">
+            <a href="/" style="color: var(--text-muted);"><i class="fas fa-home"></i> Inicio</a> 
+            <i class="fas fa-chevron-right" style="font-size: 0.6rem; align-self: center;"></i>
+            <a href="/seccion/{{ noticia.seccion }}" style="color: var(--blue-accent);">{{ noticia.seccion|replace('-', ' ')|title }}</a>
+        </nav>
+
+        <header>
+            <h1 class="article-title" itemprop="headline">{{ noticia.titulo }}</h1>
+            <div class="article-meta">
+                <span><i class="far fa-calendar"></i> <time>{{ noticia.fecha }}</time></span>
+                {% if noticia.categoria %}<span><i class="fas fa-tag"></i> {{ noticia.categoria }}</span>{% endif %}
+                <span><i class="far fa-clock"></i> <span id="reading-time">Calculando...</span></span>
+            </div>
+        </header>
+
+        {% if noticia.imagen %}
+        <figure class="article-figure">
+            <img src="{{ noticia.imagen }}" alt="{{ noticia.titulo }}" onclick="openLightbox(this)">
+        </figure>
+        {% endif %}
+
+        {% if noticia.video_corto %}
+        <div class="short-video-container">
+            <div class="video-badge"><i class="fas fa-play"></i> VIDEO EXCLUSIVO</div>
+            <video controls poster="{{ noticia.imagen or '' }}">
+                <source src="{{ noticia.video_corto }}" type="video/mp4">
+            </video>
+        </div>
+        {% endif %}
+
+        <div class="article-body">
+            {% if noticia.resumen %}
+            <div class="article-lead">{{ noticia.resumen }}</div>
+            {% endif %}
+            <div class="article-content">
+                {% if noticia.desarrollo %}
+                    {% for p in noticia.desarrollo.split('\n\n') %}
+                        {% if p.strip() %}<p>{{ p.strip() }}</p>{% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border-light);">
+            <h3 style="margin-bottom: 16px;"><i class="fas fa-share-alt" style="color: var(--blue-accent);"></i> Comparte</h3>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="https://wa.me/?text={{ noticia.titulo | urlencode }}%20{{ request.url | urlencode }}" target="_blank" style="background: #25D366; color: white; padding: 10px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: 600;"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}" target="_blank" style="background: #1877F2; color: white; padding: 10px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: 600;"><i class="fab fa-facebook-f"></i> Facebook</a>
+                <a href="https://twitter.com/intent/tweet?text={{ noticia.titulo | urlencode }}&url={{ request.url | urlencode }}" target="_blank" style="background: #1DA1F2; color: white; padding: 10px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: 600;"><i class="fab fa-twitter"></i> Twitter</a>
+            </div>
+        </div>
+
+        {% if relacionadas %}
+        <div style="margin-top: 48px;">
+            <h3 style="margin-bottom: 20px;"><i class="fas fa-bookmark" style="color: var(--blue-accent);"></i> Relacionadas</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                {% for rel in relacionadas %}
+                <a href="/noticia/{{ rel.id }}" style="background: var(--bg-card); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-light); text-decoration: none; color: inherit; transition: 0.3s;" onmouseover="this.style.borderColor='var(--blue-accent)'" onmouseout="this.style.borderColor='var(--border-light)'">
+                    {% if rel.imagen %}<img src="{{ rel.imagen }}" style="width: 100%; height: 120px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 12px;">{% endif %}
+                    <h4 style="font-size: 1rem; margin: 0; color: var(--text-primary);">{{ rel.titulo }}</h4>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 40px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="/seccion/{{ noticia.seccion }}" class="back-link"><i class="fas fa-arrow-left"></i> Volver a {{ noticia.seccion|replace('-', ' ')|title }}</a>
+            <a href="/" class="back-link" style="background: transparent; border: 1px solid var(--border-light);"><i class="fas fa-home"></i> Inicio</a>
+        </div>
+    </article>
+</main>
+{% endblock %}
