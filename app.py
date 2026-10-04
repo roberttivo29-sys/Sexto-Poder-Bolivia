@@ -45,8 +45,8 @@ db = SQLAlchemy(app)
 def inject_globals():
     return {'now': datetime.now(), 'year': datetime.now().year}
 
-ADMIN_USER = os.environ.get('ADMIN_USER', 'admin')
-ADMIN_PASS = os.environ.get('ADMIN_PASS', 'sexto2026')
+ADMIN_USER = os.environ.get('ADMIN_USER', 'tivodj')
+ADMIN_PASS = os.environ.get('ADMIN_PASS', 'sextopoder2025*')
 
 class Noticia(db.Model):
     __tablename__ = 'noticias'
