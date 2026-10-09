@@ -301,7 +301,7 @@ def admin_create_noticia():
         seccion = data.get('seccion', '').strip()
         es_semana = parse_bool(data.get('es_noticia_semana'))
 
-        # Validación inteligente: si es noticia de la semana, la sección puede ser "semana" o estar vacía
+        # Validación inteligente
         if not titulo:
             return jsonify({'error': 'El título es obligatorio'}), 400
 

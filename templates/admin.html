@@ -274,7 +274,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 <label>Flags de Portada</label>
                 <div class="flags-group">
                     <label class="flag-checkbox"><input type="checkbox" name="es_hero" value="1"> 👑 Hero Principal</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1"> 📢 Ticker</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1">  Ticker</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_popular" value="1"> 🔥 Popular</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" value="1"> ⭐ Noticia Semana</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" value="1"> 💡 Recomendar</label>
@@ -338,11 +338,11 @@ const seccionRequired = document.getElementById('seccionRequired');
 if (checkboxSemana && seccionSelect) {
     checkboxSemana.addEventListener('change', () => {
         if (checkboxSemana.checked) {
-            seccionSelect.removeAttribute('required');
+            // Es noticia de la semana → autoseleccionar "semana" y ocultar asterisco
             seccionSelect.value = 'semana';
             if (seccionRequired) seccionRequired.style.display = 'none';
         } else {
-            seccionSelect.setAttribute('required', 'required');
+            // No es noticia de la semana → limpiar selección y mostrar asterisco
             if (seccionSelect.value === 'semana') seccionSelect.value = '';
             if (seccionRequired) seccionRequired.style.display = 'inline';
         }
@@ -415,10 +415,10 @@ async function cargarNoticias() {
                 <td><span class="badge badge-activo">${n.seccion}</span></td>
                 <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
                 <td>
-                    ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
+                    ${n.es_hero ? '<span class="badge badge-hero"></span>' : ''}
                     ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
                     ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
-                    ${n.es_recomendada ? '<span class="badge badge-recomendada"></span>' : ''}
+                    ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
                     ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
                 </td>
                 <td>
