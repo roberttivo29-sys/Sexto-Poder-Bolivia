@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SEXTO PODER BOLIVIA - Backend Flask v5.3
-Incluye: Hero, Ticker, Últimas, Semana, Recomendadas (También te puede interesar - MANUAL)
+SEXTO PODER BOLIVIA - Backend Flask v5.4
+Incluye: Hero, Ticker, Últimas, Semana (Transversal), Recomendadas, Última Hora
 """
 
 import os
@@ -54,7 +54,7 @@ class Noticia(db.Model):
     titulo = db.Column(db.String(255), nullable=False, index=True)
     resumen = db.Column(db.Text, nullable=True)
     desarrollo = db.Column(db.Text, nullable=True)
-    seccion = db.Column(db.String(50), nullable=False, index=True)
+    seccion = db.Column(db.String(50), nullable=True, index=True)
     categoria = db.Column(db.String(100), nullable=True)
     imagen = db.Column(db.String(500), nullable=True)
     video_corto = db.Column(db.String(500), nullable=True)
@@ -64,7 +64,7 @@ class Noticia(db.Model):
     es_ticker = db.Column(db.Boolean, default=False, index=True)
     es_popular = db.Column(db.Boolean, default=False, index=True)
     es_noticia_semana = db.Column(db.Boolean, default=False, index=True)
-    es_recomendada = db.Column(db.Boolean, default=False, index=True)  # NUEVO CAMPO
+    es_recomendada = db.Column(db.Boolean, default=False, index=True)
     modo_ultima_hora = db.Column(db.Boolean, default=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -152,7 +152,6 @@ def index():
 
         noticia_semana = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).first()
 
-        # INNOVACIÓN: Noticias recomendadas MANUALMENTE (flag es_recomendada)
         recomendadas = Noticia.query.filter_by(estado='activo', es_recomendada=True).order_by(Noticia.created_at.desc()).limit(3).all()
         if not recomendadas:
             recomendadas = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(3).all()
@@ -204,7 +203,7 @@ def noticia_semana_detalle():
 @app.route('/seccion/<seccion>')
 def seccion(seccion):
     try:
-        secciones_validas = ['locales', 'internacionales', 'ciencia', 'espiritualidad', 'medicina-tradicional']
+        secciones_validas = ['locales', 'internacionales', 'ciencia', 'espiritualidad', 'medicina-tradicional', 'semana']
         if seccion not in secciones_validas:
             abort(404)
         page = request.args.get('page', 1, type=int)
@@ -298,20 +297,37 @@ def admin_list_noticias():
 def admin_create_noticia():
     try:
         data = request.form
-        if not data.get('titulo') or not data.get('seccion'):
-            return jsonify({'error': 'El título y la sección son obligatorios'}), 400
+        titulo = data.get('titulo', '').strip()
+        seccion = data.get('seccion', '').strip()
+        es_semana = parse_bool(data.get('es_noticia_semana'))
+
+        # Validación inteligente: si es noticia de la semana, la sección puede ser "semana" o estar vacía
+        if not titulo:
+            return jsonify({'error': 'El título es obligatorio'}), 400
+
+        if not es_semana and not seccion:
+            return jsonify({'error': 'La sección es obligatoria (excepto para Noticia de la Semana)'}), 400
+
+        # Si es noticia de la semana y no hay sección, asignar "semana" por defecto
+        if es_semana and not seccion:
+            seccion = 'semana'
+
         imagen_url = guardar_archivo(request.files.get('imagen'), 'imagen') if request.files.get('imagen') else None
         video_url = guardar_archivo(request.files.get('video_corto'), 'video') if request.files.get('video_corto') else None
+        
         noticia = Noticia(
-            titulo=data['titulo'].strip(), resumen=data.get('resumen', '').strip(),
-            desarrollo=data.get('desarrollo', '').strip(), seccion=data['seccion'].strip(),
+            titulo=titulo,
+            resumen=data.get('resumen', '').strip(),
+            desarrollo=data.get('desarrollo', '').strip(),
+            seccion=seccion,
             categoria=data.get('categoria', '').strip() or None,
-            imagen=imagen_url, video_corto=video_url,
+            imagen=imagen_url,
+            video_corto=video_url,
             fecha=data.get('fecha', datetime.now().strftime("%d/%m/%Y")),
             es_hero=parse_bool(data.get('es_hero')),
             es_ticker=parse_bool(data.get('es_ticker')),
             es_popular=parse_bool(data.get('es_popular')),
-            es_noticia_semana=parse_bool(data.get('es_noticia_semana')),
+            es_noticia_semana=es_semana,
             es_recomendada=parse_bool(data.get('es_recomendada')),
             modo_ultima_hora=parse_bool(data.get('modo_ultima_hora')),
             estado='activo'

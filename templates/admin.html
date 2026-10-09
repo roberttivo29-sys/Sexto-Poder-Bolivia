@@ -176,7 +176,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         <div class="stat-card"><div class="stat-value" id="statTicker" style="color: var(--red-news);">0</div><div class="stat-label">Ticker</div></div>
         <div class="stat-card"><div class="stat-value" id="statPopular" style="color: #f97316;">0</div><div class="stat-label">Populares</div></div>
         <div class="stat-card"><div class="stat-value" id="statRecomendadas" style="color: var(--brand-primary);">0</div><div class="stat-label">Recomendadas</div></div>
-        <!-- NUEVO CONTADOR DE SEMANA -->
         <div class="stat-card"><div class="stat-value" id="statSemana" style="color: var(--brand-gold);">0</div><div class="stat-label">Semana</div></div>
     </div>
     
@@ -215,14 +214,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                     <input type="text" name="titulo" required maxlength="255">
                 </div>
                 <div class="form-group">
-                    <label>Sección *</label>
-                    <select name="seccion" required>
+                    <label>Sección <span id="seccionRequired">*</span></label>
+                    <select name="seccion" id="seccionSelect">
                         <option value="">-- Seleccionar --</option>
                         <option value="locales">Locales</option>
                         <option value="internacionales">Internacionales</option>
                         <option value="ciencia">Ciencia y Tecnología</option>
                         <option value="espiritualidad">Espiritualidad</option>
                         <option value="medicina-tradicional">Medicina Tradicional</option>
+                        <option value="semana">⭐ Noticia de la Semana (Transversal)</option>
                     </select>
                 </div>
             </div>
@@ -330,6 +330,25 @@ document.querySelectorAll('.flag-checkbox input').forEach(cb => {
     });
 });
 
+// LÓGICA INTELIGENTE: Si es "Noticia de la Semana", la sección es opcional
+const checkboxSemana = document.querySelector('input[name="es_noticia_semana"]');
+const seccionSelect = document.getElementById('seccionSelect');
+const seccionRequired = document.getElementById('seccionRequired');
+
+if (checkboxSemana && seccionSelect) {
+    checkboxSemana.addEventListener('change', () => {
+        if (checkboxSemana.checked) {
+            seccionSelect.removeAttribute('required');
+            seccionSelect.value = 'semana';
+            if (seccionRequired) seccionRequired.style.display = 'none';
+        } else {
+            seccionSelect.setAttribute('required', 'required');
+            if (seccionSelect.value === 'semana') seccionSelect.value = '';
+            if (seccionRequired) seccionRequired.style.display = 'inline';
+        }
+    });
+}
+
 function setupPreview(inputId, previewId, nameId, type) {
     document.getElementById(inputId).addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -379,8 +398,6 @@ async function cargarNoticias() {
         document.getElementById('statTicker').textContent = noticias.filter(n => n.es_ticker).length;
         document.getElementById('statPopular').textContent = noticias.filter(n => n.es_popular).length;
         document.getElementById('statRecomendadas').textContent = noticias.filter(n => n.es_recomendada).length;
-        
-        // CORRECCIÓN: Actualizar contador de Semana
         const statSemanaEl = document.getElementById('statSemana');
         if (statSemanaEl) {
             statSemanaEl.textContent = noticias.filter(n => n.es_noticia_semana).length;
@@ -401,7 +418,7 @@ async function cargarNoticias() {
                     ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
                     ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
                     ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
-                    ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
+                    ${n.es_recomendada ? '<span class="badge badge-recomendada"></span>' : ''}
                     ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
                 </td>
                 <td>
