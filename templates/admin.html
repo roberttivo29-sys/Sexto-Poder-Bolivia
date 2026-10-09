@@ -10,26 +10,15 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg-deep: #0a1628;
-            --bg-card: #1a2d4a;
-            --bg-secondary: #152238;
-            --brand-primary: #3b82f6;
-            --brand-gold: #d4af37;
-            --red-news: #dc2626;
-            --green-success: #10b981;
-            --text-primary: #f8fafc;
-            --text-secondary: #cbd5e1;
-            --text-muted: #94a3b8;
-            --border-light: rgba(148, 163, 184, 0.15);
-            --border-medium: rgba(148, 163, 184, 0.25);
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 16px;
-            --radius-full: 9999px;
+            --bg-deep: #0a1628; --bg-card: #1a2d4a; --bg-secondary: #152238;
+            --brand-primary: #3b82f6; --brand-gold: #d4af37; --red-news: #dc2626;
+            --green-success: #10b981; --text-primary: #f8fafc; --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8; --border-light: rgba(148, 163, 184, 0.15);
+            --border-medium: rgba(148, 163, 184, 0.25); --radius-sm: 8px;
+            --radius-md: 12px; --radius-lg: 16px; --radius-full: 9999px;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; }
         .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        
         .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-deep), var(--bg-secondary)); padding: 20px; }
         .login-card { background: var(--bg-card); padding: 48px 40px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 20px 60px rgba(0,0,0,0.5); width: 100%; max-width: 420px; text-align: center; }
         .login-logo { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--brand-primary); margin: 0 auto 20px; overflow: hidden; box-shadow: 0 0 30px rgba(59, 130, 246, 0.4); }
@@ -46,7 +35,6 @@
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
         .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
         .error-msg { background: rgba(220, 38, 38, 0.1); border: 1px solid var(--red-news); color: #fca5a5; padding: 12px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.9rem; }
-        
         .admin-header { background: var(--bg-card); padding: 16px 24px; border-radius: var(--radius-md); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-light); flex-wrap: wrap; gap: 12px; }
         .admin-title { display: flex; align-items: center; gap: 12px; font-size: 1.3rem; font-weight: 800; }
         .admin-title .highlight { color: var(--brand-primary); }
@@ -56,12 +44,10 @@
         .btn-red { background: var(--red-news); }
         .btn-green { background: var(--green-success); }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-light); text-align: center; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-bottom: 4px; }
         .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        
         .tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--border-light); flex-wrap: wrap; overflow-x: auto; padding-bottom: 2px; }
         .tab { padding: 12px 20px; background: transparent; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
         .tab.active { color: var(--brand-primary); border-bottom-color: var(--brand-primary); }
@@ -69,7 +55,6 @@
         .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .table-wrapper { background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-light); overflow: hidden; }
         .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 650px; }
@@ -83,7 +68,6 @@
         .badge-ticker { background: rgba(220, 38, 38, 0.15); color: var(--red-news); }
         .badge-popular { background: rgba(249, 115, 22, 0.15); color: #f97316; }
         .badge-recomendada { background: rgba(59, 130, 246, 0.15); color: var(--brand-primary); }
-        
         .form-section { background: var(--bg-card); padding: 28px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 24px; }
         .form-section h2 { font-size: 1.3rem; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 10px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -92,7 +76,6 @@
         .flag-checkbox:hover { border-color: var(--brand-primary); }
         .flag-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--brand-primary); }
         .flag-checkbox.checked { background: rgba(59, 130, 246, 0.1); border-color: var(--brand-primary); }
-        
         .file-upload { border: 2px dashed var(--border-medium); padding: 24px; text-align: center; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; background: var(--bg-secondary); position: relative; }
         .file-upload:hover { border-color: var(--brand-primary); background: rgba(59, 130, 246, 0.05); }
         .file-upload i { font-size: 2rem; color: var(--text-muted); margin-bottom: 8px; display: block; }
@@ -101,12 +84,10 @@
         .preview-img { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
         .preview-video { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
         .file-name { font-size: 0.8rem; color: var(--green-success); font-weight: 600; word-break: break-all; }
-        
         .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: var(--radius-sm); color: white; font-weight: 600; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); animation: slideIn 0.3s ease-out; display: flex; align-items: center; gap: 10px; max-width: 90vw; }
         .toast-success { background: var(--green-success); }
         .toast-error { background: var(--red-news); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .admin-header { flex-direction: column; align-items: stretch; text-align: center; }
@@ -195,6 +176,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         <div class="stat-card"><div class="stat-value" id="statTicker" style="color: var(--red-news);">0</div><div class="stat-label">Ticker</div></div>
         <div class="stat-card"><div class="stat-value" id="statPopular" style="color: #f97316;">0</div><div class="stat-label">Populares</div></div>
         <div class="stat-card"><div class="stat-value" id="statRecomendadas" style="color: var(--brand-primary);">0</div><div class="stat-label">Recomendadas</div></div>
+        <!-- NUEVO CONTADOR DE SEMANA -->
+        <div class="stat-card"><div class="stat-value" id="statSemana" style="color: var(--brand-gold);">0</div><div class="stat-label">Semana</div></div>
     </div>
     
     <div class="tabs">
@@ -294,8 +277,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                     <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1"> 📢 Ticker</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_popular" value="1"> 🔥 Popular</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" value="1"> ⭐ Noticia Semana</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" value="1">  Recomendar en portada</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="modo_ultima_hora" value="1">  Última Hora</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" value="1"> 💡 Recomendar</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="modo_ultima_hora" value="1"> 🚨 Última Hora</label>
                 </div>
             </div>
             <button type="submit" class="btn btn-green" id="btnGuardarNoticia" style="padding: 14px 28px; font-size: 1rem; width: 100%; justify-content: center;">
@@ -397,6 +380,12 @@ async function cargarNoticias() {
         document.getElementById('statPopular').textContent = noticias.filter(n => n.es_popular).length;
         document.getElementById('statRecomendadas').textContent = noticias.filter(n => n.es_recomendada).length;
         
+        // CORRECCIÓN: Actualizar contador de Semana
+        const statSemanaEl = document.getElementById('statSemana');
+        if (statSemanaEl) {
+            statSemanaEl.textContent = noticias.filter(n => n.es_noticia_semana).length;
+        }
+        
         if (noticias.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">No hay noticias registradas.</td></tr>';
             return;
@@ -410,9 +399,10 @@ async function cargarNoticias() {
                 <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
                 <td>
                     ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
-                    ${n.es_ticker ? '<span class="badge badge-ticker"></span>' : ''}
+                    ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
                     ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
                     ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
+                    ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
                 </td>
                 <td>
                     <a href="/noticia/${n.id}" target="_blank" class="btn btn-brand" style="padding: 6px 10px; font-size: 0.75rem;"><i class="fas fa-eye"></i></a>
@@ -515,6 +505,5 @@ cargarNoticias();
 cargarCaricatura();
 </script>
 {% endif %}
-
 </body>
 </html>
