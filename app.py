@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SEXTO PODER BOLIVIA - Backend Flask v5.4
+SEXTO PODER BOLIVIA - Backend Flask v5.5
 Incluye: Hero, Ticker, Últimas, Semana (Transversal), Recomendadas, Última Hora
+Migración automática de base de datos integrada
 """
 
 import os
@@ -392,12 +393,42 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 def init_db():
+    """Inicializa la base de datos y agrega columnas faltantes si es necesario"""
     with app.app_context():
+        # Crear tablas si no existen
         db.create_all()
+        
+        # Migración automática: agregar columnas faltantes
+        import sqlite3
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        try:
+            # Agregar columna es_noticia_semana si no existe
+            cursor.execute("ALTER TABLE noticias ADD COLUMN es_noticia_semana BOOLEAN DEFAULT 0;")
+            conn.commit()
+            logger.info("✅ Columna 'es_noticia_semana' agregada")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e).lower():
+                logger.error(f"Error al agregar es_noticia_semana: {e}")
+        
+        try:
+            # Agregar columna es_recomendada si no existe
+            cursor.execute("ALTER TABLE noticias ADD COLUMN es_recomendada BOOLEAN DEFAULT 0;")
+            conn.commit()
+            logger.info("✅ Columna 'es_recomendada' agregada")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" not in str(e).lower():
+                logger.error(f"Error al agregar es_recomendada: {e}")
+        
+        conn.close()
+        
+        # Crear configuración de caricatura si no existe
         if not Configuracion.query.filter_by(clave='caricatura').first():
             config = Configuracion(clave='caricatura', valor='', texto='Caricatura del día')
             db.session.add(config)
             db.session.commit()
+            logger.info("✅ Configuración de caricatura creada")
 
 if __name__ == '__main__':
     try:
