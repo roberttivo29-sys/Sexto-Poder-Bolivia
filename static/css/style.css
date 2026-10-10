@@ -844,7 +844,7 @@ img { max-width: 100%; height: auto; display: block; }
     gap: 4px;
 }
 
-/* CARICATURA COMPACTA */
+/* CARICATURA COMPACTA - MEJORADA */
 .cartoon-widget-compact { cursor: pointer; transition: all var(--transition-smooth); }
 .cartoon-widget-compact:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
@@ -856,14 +856,15 @@ img { max-width: 100%; height: auto; display: block; }
     justify-content: center;
     align-items: center;
     background: var(--bg-secondary);
-    padding: 10px;
+    padding: 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    min-height: 280px;
 }
 
 .cartoon-container-compact img {
     width: 100%;
     height: auto;
-    max-height: 150px;
+    max-height: 400px;
     object-fit: contain;
     border-radius: var(--radius-sm);
     transition: transform var(--transition-slow);
@@ -873,15 +874,16 @@ img { max-width: 100%; height: auto; display: block; }
 .cartoon-widget-compact:hover .cartoon-container-compact img { transform: scale(1.03); }
 
 .caricatura-caption-compact {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
     font-style: italic;
     text-align: center;
-    padding: 6px 10px;
+    padding: 10px 14px;
     background: var(--bg-secondary);
     border-radius: var(--radius-sm);
-    border-left: 3px solid var(--gold-accent);
+    border-left: 4px solid var(--gold-accent);
     margin: 0;
+    line-height: 1.5;
 }
 
 /* REDES SOCIALES */
@@ -1991,6 +1993,19 @@ img { max-width: 100%; height: auto; display: block; }
     
     .recomendada-item { flex-direction: column; }
     .recomendada-image { width: 100%; height: 140px; }
+    
+    /* CARICATURA RESPONSIVE MÓVIL */
+    .cartoon-container-compact {
+        min-height: 200px;
+        padding: 12px;
+    }
+    .cartoon-container-compact img {
+        max-height: 280px;
+    }
+    .caricatura-caption-compact {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
 }
 
 @media (max-width: 480px) {
