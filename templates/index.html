@@ -1,509 +1,201 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Panel Admin • Sexto Poder Bolivia</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg-deep: #0a1628; --bg-card: #1a2d4a; --bg-secondary: #152238;
-            --brand-primary: #3b82f6; --brand-gold: #d4af37; --red-news: #dc2626;
-            --green-success: #10b981; --text-primary: #f8fafc; --text-secondary: #cbd5e1;
-            --text-muted: #94a3b8; --border-light: rgba(148, 163, 184, 0.15);
-            --border-medium: rgba(148, 163, 184, 0.25); --radius-sm: 8px;
-            --radius-md: 12px; --radius-lg: 16px; --radius-full: 9999px;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-deep); color: var(--text-primary); min-height: 100vh; }
-        .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-deep), var(--bg-secondary)); padding: 20px; }
-        .login-card { background: var(--bg-card); padding: 48px 40px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 20px 60px rgba(0,0,0,0.5); width: 100%; max-width: 420px; text-align: center; }
-        .login-logo { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--brand-primary); margin: 0 auto 20px; overflow: hidden; box-shadow: 0 0 30px rgba(59, 130, 246, 0.4); }
-        .login-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .login-card h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 8px; letter-spacing: 2px; }
-        .login-card h1 .highlight { color: var(--brand-primary); }
-        .login-card p { color: var(--text-muted); margin-bottom: 32px; font-size: 0.9rem; }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 16px; background: var(--bg-secondary); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 1rem; font-family: inherit; transition: all 0.2s; }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
-        .form-group textarea { resize: vertical; min-height: 100px; }
-        .btn-primary { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--brand-primary), #2563eb); color: white; border: none; border-radius: var(--radius-sm); font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-        .error-msg { background: rgba(220, 38, 38, 0.1); border: 1px solid var(--red-news); color: #fca5a5; padding: 12px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 0.9rem; }
-        .admin-header { background: var(--bg-card); padding: 16px 24px; border-radius: var(--radius-md); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-light); flex-wrap: wrap; gap: 12px; }
-        .admin-title { display: flex; align-items: center; gap: 12px; font-size: 1.3rem; font-weight: 800; }
-        .admin-title .highlight { color: var(--brand-primary); }
-        .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn { padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: white; }
-        .btn-brand { background: var(--brand-primary); }
-        .btn-red { background: var(--red-news); }
-        .btn-green { background: var(--green-success); }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-light); text-align: center; }
-        .stat-value { font-size: 2rem; font-weight: 900; margin-bottom: 4px; }
-        .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--border-light); flex-wrap: wrap; overflow-x: auto; padding-bottom: 2px; }
-        .tab { padding: 12px 20px; background: transparent; border: none; color: var(--text-muted); font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-        .tab.active { color: var(--brand-primary); border-bottom-color: var(--brand-primary); }
-        .tab:hover { color: var(--text-primary); }
-        .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .table-wrapper { background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-light); overflow: hidden; }
-        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 650px; }
-        th { background: var(--bg-secondary); padding: 14px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
-        td { padding: 14px; border-top: 1px solid var(--border-light); font-size: 0.9rem; vertical-align: middle; }
-        tr:hover td { background: rgba(59, 130, 246, 0.05); }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-        .badge-activo { background: rgba(16, 185, 129, 0.15); color: var(--green-success); }
-        .badge-archivado { background: rgba(148, 163, 184, 0.15); color: var(--text-muted); }
-        .badge-hero { background: rgba(212, 175, 55, 0.15); color: var(--brand-gold); }
-        .badge-ticker { background: rgba(220, 38, 38, 0.15); color: var(--red-news); }
-        .badge-popular { background: rgba(249, 115, 22, 0.15); color: #f97316; }
-        .badge-recomendada { background: rgba(59, 130, 246, 0.15); color: var(--brand-primary); }
-        .form-section { background: var(--bg-card); padding: 28px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 24px; }
-        .form-section h2 { font-size: 1.3rem; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 10px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .flags-group { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
-        .flag-checkbox { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg-secondary); border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border-light); transition: all 0.2s; }
-        .flag-checkbox:hover { border-color: var(--brand-primary); }
-        .flag-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--brand-primary); }
-        .flag-checkbox.checked { background: rgba(59, 130, 246, 0.1); border-color: var(--brand-primary); }
-        .file-upload { border: 2px dashed var(--border-medium); padding: 24px; text-align: center; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; background: var(--bg-secondary); position: relative; }
-        .file-upload:hover { border-color: var(--brand-primary); background: rgba(59, 130, 246, 0.05); }
-        .file-upload i { font-size: 2rem; color: var(--text-muted); margin-bottom: 8px; display: block; }
-        .file-upload input { display: none; }
-        .preview-container { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-        .preview-img { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
-        .preview-video { max-width: 100%; max-height: 200px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
-        .file-name { font-size: 0.8rem; color: var(--green-success); font-weight: 600; word-break: break-all; }
-        .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: var(--radius-sm); color: white; font-weight: 600; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.4); animation: slideIn 0.3s ease-out; display: flex; align-items: center; gap: 10px; max-width: 90vw; }
-        .toast-success { background: var(--green-success); }
-        .toast-error { background: var(--red-news); }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @media (max-width: 768px) {
-            .form-row { grid-template-columns: 1fr; }
-            .admin-header { flex-direction: column; align-items: stretch; text-align: center; }
-            .admin-title { justify-content: center; }
-            .admin-actions { justify-content: center; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .stat-value { font-size: 1.6rem; }
-            .form-section { padding: 20px; }
-            .flags-group { flex-direction: column; }
-            .flag-checkbox { width: 100%; justify-content: flex-start; }
-        }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Sexto Poder Bolivia | Periodismo Independiente{% endblock %}
+{% block description %}Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.{% endblock %}
 
-{% if login_mode %}
-<div class="login-wrapper">
-    <div class="login-card">
-        <div class="login-logo">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">
-        </div>
-        <h1>SEXTO <span class="highlight">PODER</span></h1>
-        <p>Panel de Administración</p>
-        {% if error %}
-        <div class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
-        {% endif %}
-        <form id="loginForm">
-            <div class="form-group">
-                <label><i class="fas fa-user"></i> Usuario</label>
-                <input type="text" name="user" id="user" required autocomplete="username">
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-lock"></i> Contraseña</label>
-                <input type="password" name="pass" id="pass" required autocomplete="current-password">
-            </div>
-            <button type="submit" class="btn-primary" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-            </button>
-        </form>
-    </div>
-</div>
-<script>
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('loginBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-    try {
-        const res = await fetch('/admin/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({user: document.getElementById('user').value, pass: document.getElementById('pass').value})
-        });
-        const data = await res.json();
-        if (data.success) {
-            window.location.href = '/admin';
-        } else {
-            showToast(data.error || 'Credenciales incorrectas', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
-        }
-    } catch(err) {
-        showToast('Error de conexión', 'error');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
-    }
-});
-</script>
-{% else %}
-<div class="admin-container">
-    <div class="admin-header">
-        <div class="admin-title">
-            <i class="fas fa-shield-alt" style="color: var(--brand-primary);"></i>
-            SEXTO <span class="highlight">PODER</span> BOLIVIA
-        </div>
-        <div class="admin-actions">
-            <a href="/" target="_blank" class="btn btn-brand"><i class="fas fa-external-link-alt"></i> Ver Web</a>
-            <a href="/admin/logout" class="btn btn-red"><i class="fas fa-sign-out-alt"></i> Salir</a>
-        </div>
-    </div>
+{% block content %}
+<main class="container" id="main-content">
     
-    <div class="stats-grid">
-        <div class="stat-card"><div class="stat-value" id="statTotal" style="color: var(--brand-primary);">0</div><div class="stat-label">Total</div></div>
-        <div class="stat-card"><div class="stat-value" id="statActivas" style="color: var(--green-success);">0</div><div class="stat-label">Activas</div></div>
-        <div class="stat-card"><div class="stat-value" id="statHero" style="color: var(--brand-gold);">0</div><div class="stat-label">Hero</div></div>
-        <div class="stat-card"><div class="stat-value" id="statTicker" style="color: var(--red-news);">0</div><div class="stat-label">Ticker</div></div>
-        <div class="stat-card"><div class="stat-value" id="statPopular" style="color: #f97316;">0</div><div class="stat-label">Populares</div></div>
-        <div class="stat-card"><div class="stat-value" id="statRecomendadas" style="color: var(--brand-primary);">0</div><div class="stat-label">Recomendadas</div></div>
-        <!-- NUEVO CONTADOR DE SEMANA -->
-        <div class="stat-card"><div class="stat-value" id="statSemana" style="color: var(--brand-gold);">0</div><div class="stat-label">Semana</div></div>
-    </div>
-    
-    <div class="tabs">
-        <button class="tab active" data-tab="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
-        <button class="tab" data-tab="nueva"><i class="fas fa-plus"></i> Nueva</button>
-        <button class="tab" data-tab="caricatura"><i class="fas fa-paint-brush"></i> Caricatura</button>
-    </div>
-    
-    <div class="tab-content active" id="tab-noticias">
-        <div class="table-wrapper">
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Título</th>
-                            <th>Sección</th>
-                            <th>Estado</th>
-                            <th>Flags</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="noticiasTable"></tbody>
-                </table>
+    <!-- Barra de Ticker TITULARES -->
+    {% if ticker %}
+    <div class="breaking-news-bar">
+        <div class="breaking-label">
+            <span class="indicator"></span> TITULARES
+        </div>
+        <div class="breaking-ticker">
+            <div class="ticker-content">
+                {% for t in ticker %}
+                <a href="/noticia/{{ t.id }}" class="ticker-item">{{ t.titulo }}</a>
+                {% endfor %}
+                {% for t in ticker %}
+                <a href="/noticia/{{ t.id }}" class="ticker-item">{{ t.titulo }}</a>
+                {% endfor %}
             </div>
         </div>
     </div>
-    
-    <div class="tab-content" id="tab-nueva">
-        <form id="formNoticia" enctype="multipart/form-data" class="form-section">
-            <h2><i class="fas fa-plus-circle" style="color: var(--brand-primary);"></i> Nueva Noticia</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Título *</label>
-                    <input type="text" name="titulo" required maxlength="255">
+    {% endif %}
+
+    <!-- Layout Principal: 2 columnas equilibradas -->
+    <div class="main-layout">
+        
+        <!-- COLUMNA IZQUIERDA: Hero + Semana + Recomendadas -->
+        <div class="column-left">
+            
+            <!-- Hero Principal -->
+            {% if hero %}
+            <a href="/noticia/{{ hero.id }}" class="hero-section">
+                <div class="hero-image">
+                    <img src="{{ hero.imagen or 'https://placehold.co/800x450/0f172a/FFF?text=Sexto+Poder' }}" alt="{{ hero.titulo }}" loading="eager">
                 </div>
-                <div class="form-group">
-                    <label>Sección *</label>
-                    <select name="seccion" required>
-                        <option value="">-- Seleccionar --</option>
-                        <option value="locales">Locales</option>
-                        <option value="internacionales">Internacionales</option>
-                        <option value="ciencia">Ciencia y Tecnología</option>
-                        <option value="espiritualidad">Espiritualidad</option>
-                        <option value="medicina-tradicional">Medicina Tradicional</option>
-                    </select>
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <span class="seccion-card-badge">{{ hero.seccion|replace('-', ' ')|title }}</span>
+                    <h2>{{ hero.titulo }}</h2>
+                    {% if hero.resumen %}
+                    <p class="lead">{{ hero.resumen[:150] }}...</p>
+                    {% endif %}
+                    <span class="btn-read-more">Leer nota completa <i class="fas fa-arrow-right"></i></span>
                 </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <input type="text" name="categoria" maxlength="100">
+            </a>
+            {% endif %}
+
+            <!-- Noticia de la Semana (Extendida) -->
+            {% if noticia_semana %}
+            <a href="/noticia-semana" class="noticia-semana-widget">
+                <div class="noticia-semana-header">
+                    <i class="fas fa-star"></i> Noticia de la Semana
                 </div>
-                <div class="form-group">
-                    <label>Fecha (Opcional)</label>
-                    <input type="text" name="fecha" placeholder="Ej: 03/10/2026">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Resumen *</label>
-                <textarea name="resumen" required maxlength="500" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Desarrollo *</label>
-                <textarea name="desarrollo" required style="min-height: 200px;" placeholder="Usa doble salto de línea para separar párrafos."></textarea>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Imagen</label>
-                    <label class="file-upload" for="imagenFile">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <div>Haz clic para subir una imagen</div>
-                        <input type="file" name="imagen" id="imagenFile" accept="image/*">
-                        <div class="preview-container">
-                            <span id="imagenName" class="file-name"></span>
-                            <img id="previewImagen" class="preview-img" style="display:none;">
-                        </div>
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>Video Corto (opcional)</label>
-                    <label class="file-upload" for="videoFile">
-                        <i class="fas fa-video"></i>
-                        <div>Haz clic para subir un video (.mp4)</div>
-                        <input type="file" name="video_corto" id="videoFile" accept="video/*">
-                        <div class="preview-container">
-                            <span id="videoName" class="file-name"></span>
-                            <video id="previewVideo" class="preview-video" style="display:none;" controls></video>
-                        </div>
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Flags de Portada</label>
-                <div class="flags-group">
-                    <label class="flag-checkbox"><input type="checkbox" name="es_hero" value="1"> 👑 Hero Principal</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1"> 📢 Ticker</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" value="1"> 🔥 Popular</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" value="1"> ⭐ Noticia Semana</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" value="1"> 💡 Recomendar</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="modo_ultima_hora" value="1"> 🚨 Última Hora</label>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-green" id="btnGuardarNoticia" style="padding: 14px 28px; font-size: 1rem; width: 100%; justify-content: center;">
-                <i class="fas fa-save"></i> Guardar Noticia
-            </button>
-        </form>
-    </div>
-    
-    <div class="tab-content" id="tab-caricatura">
-        <form id="formCaricatura" enctype="multipart/form-data" class="form-section">
-            <h2><i class="fas fa-paint-brush" style="color: var(--brand-gold);"></i> Caricatura del Día</h2>
-            <div class="form-group">
-                <label>Imagen</label>
-                <label class="file-upload" for="caricaturaFile">
-                    <i class="fas fa-image"></i>
-                    <div>Haz clic para subir la caricatura</div>
-                    <input type="file" name="archivo" id="caricaturaFile" accept="image/*">
-                    <div class="preview-container">
-                        <span id="caricaturaName" class="file-name"></span>
-                        <img id="previewCaricatura" class="preview-img" style="display:none;">
+                <div class="noticia-semana-body">
+                    {% if noticia_semana.imagen %}
+                    <div class="noticia-semana-image">
+                        <img src="{{ noticia_semana.imagen }}" alt="{{ noticia_semana.titulo }}" loading="lazy">
                     </div>
-                </label>
+                    {% endif %}
+                    <div class="noticia-semana-content">
+                        <h3>{{ noticia_semana.titulo }}</h3>
+                        {% if noticia_semana.resumen %}
+                        <p>{{ noticia_semana.resumen[:150] }}...</p>
+                        {% endif %}
+                        <span class="btn-leer-mas">Leer seguimiento completo <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- INNOVACIÓN: También te puede interesar -->
+            {% if recomendadas %}
+            <div class="recomendadas-widget">
+                <div class="recomendadas-header">
+                    <i class="fas fa-compass"></i> También te puede interesar
+                </div>
+                <div class="recomendadas-list">
+                    {% for nota in recomendadas %}
+                    <a href="/noticia/{{ nota.id }}" class="recomendada-item">
+                        {% if nota.imagen %}
+                        <div class="recomendada-image">
+                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="recomendada-content">
+                            <span class="recomendada-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
+                            <h4>{{ nota.titulo }}</h4>
+                            <span class="recomendada-date">
+                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
-            <div class="form-group">
-                <label>Pie de foto</label>
-                <input type="text" name="texto" id="caricaturaTexto" placeholder="Texto descriptivo de la caricatura...">
+            {% endif %}
+
+        </div>
+
+        <!-- COLUMNA DERECHA: Últimas + Caricatura + Redes -->
+        <aside class="sidebar">
+            
+            <!-- Últimas Noticias -->
+            {% if ultimas_noticias %}
+            <div class="widget">
+                <h3 class="widget-title">
+                    <i class="fas fa-clock" style="color: var(--blue-accent);"></i> Últimas Noticias
+                </h3>
+                <div class="ultimas-list">
+                    {% for nota in ultimas_noticias %}
+                    <a href="/noticia/{{ nota.id }}" class="ultima-item">
+                        {% if nota.imagen %}
+                        <div class="ultima-item-image">
+                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="ultima-item-content">
+                            <span class="ultima-item-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
+                            <h4>{{ nota.titulo[:60] }}{% if nota.titulo|length > 60 %}...{% endif %}</h4>
+                            <span class="ultima-item-date">
+                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
-            <input type="hidden" name="clave" value="caricatura">
-            <button type="submit" class="btn btn-green" id="btnGuardarCaricatura" style="padding: 14px 28px; font-size: 1rem; width: 100%; justify-content: center;">
-                <i class="fas fa-save"></i> Guardar Caricatura
-            </button>
-        </form>
+            {% endif %}
+
+            <!-- Caricatura Compacta -->
+            {% if caricatura %}
+            <div class="widget cartoon-widget-compact">
+                <h3 class="widget-title">
+                    <i class="fas fa-paint-brush" style="color: var(--gold-accent);"></i> Caricatura
+                </h3>
+                <div class="cartoon-container-compact">
+                    <img src="{{ caricatura.valor or 'https://placehold.co/400x250/1e293b/FFF?text=Caricatura' }}" 
+                         alt="Caricatura del día" 
+                         loading="lazy" 
+                         onclick="openLightbox(this)">
+                </div>
+                {% if caricatura.texto %}
+                <p class="caricatura-caption-compact">{{ caricatura.texto }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Síguenos (SOLO FACEBOOK Y TIKTOK) -->
+            <div class="widget">
+                <h3 class="widget-title">
+                    <i class="fas fa-share-nodes" style="color: var(--blue-accent);"></i> Síguenos
+                </h3>
+                <div class="redes-list">
+                    <a href="https://www.facebook.com/profile.php?id=61589606326280" target="_blank" rel="noopener noreferrer" class="red-item">
+                        <div class="red-icon facebook"><i class="fab fa-facebook-f"></i></div>
+                        <div class="red-info">
+                            <span class="red-name">Facebook</span>
+                            <span class="red-count">Síguenos para más</span>
+                        </div>
+                    </a>
+                    <a href="https://www.tiktok.com/@sexto.poder.boliv" target="_blank" rel="noopener noreferrer" class="red-item">
+                        <div class="red-icon tiktok"><i class="fab fa-tiktok"></i></div>
+                        <div class="red-info">
+                            <span class="red-name">TikTok</span>
+                            <span class="red-count">Videos exclusivos</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+        </aside>
     </div>
-</div>
 
-<script>
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-    });
-});
+    <!-- Secciones Destacadas (full width) -->
+    <div class="secciones-destacadas">
+        <div class="section-header">
+            <h2>Explora por Secciones</h2>
+        </div>
+        <div class="secciones-grid">
+            {% for sec in destacadas_principal %}
+            <a href="/seccion/{{ sec.seccion }}" class="seccion-card">
+                <div class="seccion-card-image">
+                    <img src="{{ sec.imagen or 'https://placehold.co/400x250/1e293b/FFF?text=Seccion' }}" 
+                         alt="{{ sec.seccion }}" 
+                         loading="lazy">
+                </div>
+                <div class="seccion-card-content">
+                    <span class="seccion-card-badge">{{ sec.seccion|replace('-', ' ')|title }}</span>
+                    <h4>{{ sec.titulo }}</h4>
+                    <span class="seccion-card-link">Ver todas las notas <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
 
-document.querySelectorAll('.flag-checkbox input').forEach(cb => {
-    cb.addEventListener('change', () => {
-        cb.closest('.flag-checkbox').classList.toggle('checked', cb.checked);
-    });
-});
-
-function setupPreview(inputId, previewId, nameId, type) {
-    document.getElementById(inputId).addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const nameEl = document.getElementById(nameId);
-        const previewEl = document.getElementById(previewId);
-        if (file) {
-            nameEl.textContent = file.name;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                previewEl.src = ev.target.result;
-                previewEl.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            nameEl.textContent = '';
-            previewEl.style.display = 'none';
-            previewEl.src = '';
-        }
-    });
-}
-setupPreview('imagenFile', 'previewImagen', 'imagenName', 'image');
-setupPreview('videoFile', 'previewVideo', 'videoName', 'video');
-setupPreview('caricaturaFile', 'previewCaricatura', 'caricaturaName', 'image');
-
-function showToast(msg, type='success') {
-    const toast = document.createElement('div');
-    toast.className = 'toast toast-' + type;
-    toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' + msg;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3500);
-}
-
-async function cargarNoticias() {
-    try {
-        const res = await fetch('/api/admin/noticias');
-        if (!res.ok) throw new Error();
-        const noticias = await res.json();
-        const tbody = document.getElementById('noticiasTable');
-        
-        document.getElementById('statTotal').textContent = noticias.length;
-        document.getElementById('statActivas').textContent = noticias.filter(n => n.estado === 'activo').length;
-        document.getElementById('statHero').textContent = noticias.filter(n => n.es_hero).length;
-        document.getElementById('statTicker').textContent = noticias.filter(n => n.es_ticker).length;
-        document.getElementById('statPopular').textContent = noticias.filter(n => n.es_popular).length;
-        document.getElementById('statRecomendadas').textContent = noticias.filter(n => n.es_recomendada).length;
-        
-        // CORRECCIÓN: Actualizar contador de Semana
-        const statSemanaEl = document.getElementById('statSemana');
-        if (statSemanaEl) {
-            statSemanaEl.textContent = noticias.filter(n => n.es_noticia_semana).length;
-        }
-        
-        if (noticias.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">No hay noticias registradas.</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = noticias.map(n => `
-            <tr>
-                <td><strong>#${n.id}</strong></td>
-                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${n.titulo}">${n.titulo}</td>
-                <td><span class="badge badge-activo">${n.seccion}</span></td>
-                <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
-                <td>
-                    ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
-                    ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
-                    ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
-                    ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
-                    ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
-                </td>
-                <td>
-                    <a href="/noticia/${n.id}" target="_blank" class="btn btn-brand" style="padding: 6px 10px; font-size: 0.75rem;"><i class="fas fa-eye"></i></a>
-                    <button onclick="eliminarNoticia(${n.id})" class="btn btn-red" style="padding: 6px 10px; font-size: 0.75rem;"><i class="fas fa-archive"></i></button>
-                </td>
-            </tr>
-        `).join('');
-    } catch(err) {
-        showToast('Error al cargar noticias', 'error');
-    }
-}
-
-document.getElementById('formNoticia').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btnGuardarNoticia');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-    
-    const formData = new FormData(e.target);
-    try {
-        const res = await fetch('/api/admin/noticias', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Noticia creada correctamente');
-            e.target.reset();
-            document.getElementById('previewImagen').style.display = 'none';
-            document.getElementById('previewVideo').style.display = 'none';
-            document.getElementById('imagenName').textContent = '';
-            document.getElementById('videoName').textContent = '';
-            document.querySelectorAll('.flag-checkbox').forEach(cb => cb.classList.remove('checked'));
-            cargarNoticias();
-            document.querySelector('[data-tab="noticias"]').click();
-        } else {
-            showToast(data.error || 'Error al crear', 'error');
-        }
-    } catch(err) {
-        showToast('Error de conexión', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Guardar Noticia';
-    }
-});
-
-async function eliminarNoticia(id) {
-    if (!confirm('¿Estás seguro de archivar esta noticia? Dejará de ser visible en la web.')) return;
-    try {
-        const res = await fetch('/api/admin/noticias/' + id, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Noticia archivada correctamente');
-            cargarNoticias();
-        } else {
-            showToast(data.error || 'Error', 'error');
-        }
-    } catch(err) {
-        showToast('Error de conexión', 'error');
-    }
-}
-
-document.getElementById('formCaricatura').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btnGuardarCaricatura');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-    
-    const formData = new FormData(e.target);
-    try {
-        const res = await fetch('/api/admin/config', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Caricatura actualizada correctamente');
-        } else {
-            showToast(data.error || 'Error', 'error');
-        }
-    } catch(err) {
-        showToast('Error de conexión', 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Guardar Caricatura';
-    }
-});
-
-async function cargarCaricatura() {
-    try {
-        const res = await fetch('/api/config');
-        const data = await res.json();
-        if (data.caricatura) {
-            document.getElementById('caricaturaTexto').value = data.caricatura.texto || '';
-            if (data.caricatura.valor) {
-                const img = document.getElementById('previewCaricatura');
-                img.src = data.caricatura.valor;
-                img.style.display = 'block';
-                document.getElementById('caricaturaName').textContent = 'Imagen actual cargada';
-            }
-        }
-    } catch(err) {}
-}
-
-cargarNoticias();
-cargarCaricatura();
-</script>
-{% endif %}
-</body>
-</html>
+</main>
+{% endblock %}
