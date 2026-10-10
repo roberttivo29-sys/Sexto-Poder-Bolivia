@@ -1,6 +1,6 @@
 /**
  * SEXTO PODER BOLIVIA - Main JavaScript
- * Versión: 5.1.0 - Optimizado, sin errores y con soporte para nuevos widgets
+ * Versión: 5.2.0 - Optimizado, sin errores y con soporte para nuevos widgets
  * Fecha: Octubre 2026
  */
 
@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // 15. SOPORTE PARA NUEVOS ELEMENTOS (v5.1)
+    // 15. SOPORTE PARA NUEVOS ELEMENTOS (v5.2)
     // ==========================================
     if (!isSlowConnection() && 'IntersectionObserver' in window) {
         const widgetObserver = new IntersectionObserver((entries) => {

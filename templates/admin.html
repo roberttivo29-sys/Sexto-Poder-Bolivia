@@ -43,6 +43,7 @@
         .btn-brand { background: var(--brand-primary); }
         .btn-red { background: var(--red-news); }
         .btn-green { background: var(--green-success); }
+        .btn-orange { background: #f97316; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-light); text-align: center; }
@@ -181,7 +182,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     
     <div class="tabs">
         <button class="tab active" data-tab="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
-        <button class="tab" data-tab="nueva"><i class="fas fa-plus"></i> Nueva</button>
+        <button class="tab" data-tab="nueva"><i class="fas fa-plus"></i> <span id="tabNuevaLabel">Nueva</span></button>
         <button class="tab" data-tab="caricatura"><i class="fas fa-paint-brush"></i> Caricatura</button>
     </div>
     
@@ -207,11 +208,12 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     
     <div class="tab-content" id="tab-nueva">
         <form id="formNoticia" enctype="multipart/form-data" class="form-section">
-            <h2><i class="fas fa-plus-circle" style="color: var(--brand-primary);"></i> Nueva Noticia</h2>
+            <h2><i class="fas fa-plus-circle" style="color: var(--brand-primary);" id="formIcon"></i> <span id="formTitle">Nueva Noticia</span></h2>
+            <input type="hidden" name="noticia_id" id="noticiaId" value="">
             <div class="form-row">
                 <div class="form-group">
                     <label>Título *</label>
-                    <input type="text" name="titulo" required maxlength="255">
+                    <input type="text" name="titulo" id="inputTitulo" required maxlength="255">
                 </div>
                 <div class="form-group">
                     <label>Sección <span id="seccionRequired">*</span></label>
@@ -229,20 +231,20 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             <div class="form-row">
                 <div class="form-group">
                     <label>Categoría</label>
-                    <input type="text" name="categoria" maxlength="100">
+                    <input type="text" name="categoria" id="inputCategoria" maxlength="100">
                 </div>
                 <div class="form-group">
                     <label>Fecha (Opcional)</label>
-                    <input type="text" name="fecha" placeholder="Ej: 03/10/2026">
+                    <input type="text" name="fecha" id="inputFecha" placeholder="Ej: 03/10/2026">
                 </div>
             </div>
             <div class="form-group">
                 <label>Resumen *</label>
-                <textarea name="resumen" required maxlength="500" rows="3"></textarea>
+                <textarea name="resumen" id="inputResumen" required maxlength="500" rows="3"></textarea>
             </div>
             <div class="form-group">
                 <label>Desarrollo *</label>
-                <textarea name="desarrollo" required style="min-height: 200px;" placeholder="Usa doble salto de línea para separar párrafos."></textarea>
+                <textarea name="desarrollo" id="inputDesarrollo" required style="min-height: 200px;" placeholder="Usa doble salto de línea para separar párrafos."></textarea>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -273,17 +275,21 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             <div class="form-group">
                 <label>Flags de Portada</label>
                 <div class="flags-group">
-                    <label class="flag-checkbox"><input type="checkbox" name="es_hero" value="1"> 👑 Hero Principal</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1"> 📢 Ticker</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" value="1"> 🔥 Popular</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" value="1"> ⭐ Noticia Semana</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" value="1"> 💡 Recomendar</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="modo_ultima_hora" value="1"> 🚨 Última Hora</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_hero" id="flagHero" value="1"> 👑 Hero Principal</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" id="flagTicker" value="1"> 📢 Ticker</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" id="flagPopular" value="1"> 🔥 Popular</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" id="flagSemana" value="1"> ⭐ Noticia Semana</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" id="flagRecomendada" value="1"> 💡 Recomendar</label>
                 </div>
             </div>
-            <button type="submit" class="btn btn-green" id="btnGuardarNoticia" style="padding: 14px 28px; font-size: 1rem; width: 100%; justify-content: center;">
-                <i class="fas fa-save"></i> Guardar Noticia
-            </button>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-green" id="btnGuardarNoticia" style="padding: 14px 28px; font-size: 1rem; flex: 1; justify-content: center;">
+                    <i class="fas fa-save"></i> <span id="btnGuardarText">Guardar Noticia</span>
+                </button>
+                <button type="button" class="btn btn-orange" id="btnCancelarEdicion" style="padding: 14px 28px; font-size: 1rem; display: none;" onclick="cancelarEdicion()">
+                    <i class="fas fa-times"></i> Cancelar Edición
+                </button>
+            </div>
         </form>
     </div>
     
@@ -330,7 +336,6 @@ document.querySelectorAll('.flag-checkbox input').forEach(cb => {
     });
 });
 
-// LÓGICA BLINDADA: Si es "Noticia de la Semana", la sección es opcional
 const checkboxSemana = document.querySelector('input[name="es_noticia_semana"]');
 const seccionSelect = document.getElementById('seccionSelect');
 const seccionRequired = document.getElementById('seccionRequired');
@@ -351,7 +356,6 @@ function updateSeccionRequirement() {
 
 if (checkboxSemana && seccionSelect) {
     checkboxSemana.addEventListener('change', updateSeccionRequirement);
-    // Ejecutar al cargar por si el navegador recuerda el estado
     updateSeccionRequirement();
 }
 
@@ -428,14 +432,90 @@ async function cargarNoticias() {
                     ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
                 </td>
                 <td>
-                    <a href="/noticia/${n.id}" target="_blank" class="btn btn-brand" style="padding: 6px 10px; font-size: 0.75rem;"><i class="fas fa-eye"></i></a>
-                    <button onclick="eliminarNoticia(${n.id})" class="btn btn-red" style="padding: 6px 10px; font-size: 0.75rem;"><i class="fas fa-archive"></i></button>
+                    <a href="/noticia/${n.id}" target="_blank" class="btn btn-brand" style="padding: 6px 10px; font-size: 0.75rem;" title="Ver"><i class="fas fa-eye"></i></a>
+                    <button onclick="editarNoticia(${n.id})" class="btn btn-orange" style="padding: 6px 10px; font-size: 0.75rem;" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button onclick="eliminarNoticia(${n.id})" class="btn btn-red" style="padding: 6px 10px; font-size: 0.75rem;" title="Archivar"><i class="fas fa-archive"></i></button>
                 </td>
             </tr>
         `).join('');
     } catch(err) {
         showToast('Error al cargar noticias', 'error');
     }
+}
+
+async function editarNoticia(id) {
+    try {
+        const res = await fetch('/api/admin/noticias/' + id);
+        if (!res.ok) throw new Error();
+        const noticia = await res.json();
+        
+        document.getElementById('noticiaId').value = noticia.id;
+        document.getElementById('inputTitulo').value = noticia.titulo;
+        document.getElementById('seccionSelect').value = noticia.seccion || '';
+        document.getElementById('inputCategoria').value = noticia.categoria || '';
+        document.getElementById('inputFecha').value = noticia.fecha || '';
+        document.getElementById('inputResumen').value = noticia.resumen || '';
+        document.getElementById('inputDesarrollo').value = noticia.desarrollo || '';
+        
+        document.getElementById('flagHero').checked = noticia.es_hero;
+        document.getElementById('flagTicker').checked = noticia.es_ticker;
+        document.getElementById('flagPopular').checked = noticia.es_popular;
+        document.getElementById('flagSemana').checked = noticia.es_noticia_semana;
+        document.getElementById('flagRecomendada').checked = noticia.es_recomendada;
+        
+        document.querySelectorAll('.flag-checkbox input').forEach(cb => {
+            cb.closest('.flag-checkbox').classList.toggle('checked', cb.checked);
+        });
+        
+        if (noticia.imagen) {
+            const previewImg = document.getElementById('previewImagen');
+            previewImg.src = noticia.imagen;
+            previewImg.style.display = 'block';
+            document.getElementById('imagenName').textContent = 'Imagen actual cargada';
+        }
+        
+        if (noticia.video_corto) {
+            const previewVideo = document.getElementById('previewVideo');
+            previewVideo.src = noticia.video_corto;
+            previewVideo.style.display = 'block';
+            document.getElementById('videoName').textContent = 'Video actual cargado';
+        }
+        
+        document.getElementById('formTitle').textContent = 'Editar Noticia #' + noticia.id;
+        document.getElementById('formIcon').className = 'fas fa-edit';
+        document.getElementById('formIcon').style.color = 'var(--brand-gold)';
+        document.getElementById('btnGuardarText').textContent = 'Actualizar Noticia';
+        document.getElementById('btnCancelarEdicion').style.display = 'inline-flex';
+        document.getElementById('tabNuevaLabel').textContent = 'Editar #' + noticia.id;
+        
+        updateSeccionRequirement();
+        
+        document.querySelector('[data-tab="nueva"]').click();
+        
+        showToast('Cargando noticia #' + id + ' para edición', 'success');
+    } catch(err) {
+        showToast('Error al cargar la noticia', 'error');
+    }
+}
+
+function cancelarEdicion() {
+    document.getElementById('formNoticia').reset();
+    document.getElementById('noticiaId').value = '';
+    document.getElementById('previewImagen').style.display = 'none';
+    document.getElementById('previewVideo').style.display = 'none';
+    document.getElementById('imagenName').textContent = '';
+    document.getElementById('videoName').textContent = '';
+    document.querySelectorAll('.flag-checkbox').forEach(cb => cb.classList.remove('checked'));
+    
+    document.getElementById('formTitle').textContent = 'Nueva Noticia';
+    document.getElementById('formIcon').className = 'fas fa-plus-circle';
+    document.getElementById('formIcon').style.color = 'var(--brand-primary)';
+    document.getElementById('btnGuardarText').textContent = 'Guardar Noticia';
+    document.getElementById('btnCancelarEdicion').style.display = 'none';
+    document.getElementById('tabNuevaLabel').textContent = 'Nueva';
+    
+    updateSeccionRequirement();
+    showToast('Edición cancelada', 'success');
 }
 
 document.getElementById('formNoticia').addEventListener('submit', async (e) => {
@@ -449,24 +529,19 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
         const res = await fetch('/api/admin/noticias', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.success) {
-            showToast('Noticia creada correctamente');
-            e.target.reset();
-            document.getElementById('previewImagen').style.display = 'none';
-            document.getElementById('previewVideo').style.display = 'none';
-            document.getElementById('imagenName').textContent = '';
-            document.getElementById('videoName').textContent = '';
-            document.querySelectorAll('.flag-checkbox').forEach(cb => cb.classList.remove('checked'));
-            updateSeccionRequirement(); // Restablecer estado del select
+            const action = data.action === 'update' ? 'actualizada' : 'creada';
+            showToast('Noticia ' + action + ' correctamente');
+            cancelarEdicion();
             cargarNoticias();
             document.querySelector('[data-tab="noticias"]').click();
         } else {
-            showToast(data.error || 'Error al crear', 'error');
+            showToast(data.error || 'Error al guardar', 'error');
         }
     } catch(err) {
         showToast('Error de conexión', 'error');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Guardar Noticia';
+        btn.innerHTML = '<i class="fas fa-save"></i> <span id="btnGuardarText">' + (document.getElementById('noticiaId').value ? 'Actualizar Noticia' : 'Guardar Noticia') + '</span>';
     }
 });
 

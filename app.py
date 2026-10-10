@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SEXTO PODER BOLIVIA - Backend Flask v5.5
-Incluye: Hero, Ticker, Últimas, Semana (Transversal), Recomendadas, Última Hora
-Migración automática de base de datos integrada
+SEXTO PODER BOLIVIA - Backend Flask v5.8
+Incluye: Hero, Ticker, Últimas, Semana (Transversal), Recomendadas
+Migración automática + Gestión exclusiva de Noticia de la Semana + EDICIÓN
 """
 
 import os
@@ -151,7 +151,8 @@ def index():
         if not ultimas_noticias:
             ultimas_noticias = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(4).all()
 
-        noticia_semana = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).first()
+        # CORRECCIÓN: Tomar la noticia de la semana más reciente y activa
+        noticia_semana = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).order_by(Noticia.created_at.desc()).first()
 
         recomendadas = Noticia.query.filter_by(estado='activo', es_recomendada=True).order_by(Noticia.created_at.desc()).limit(3).all()
         if not recomendadas:
@@ -185,7 +186,7 @@ def detalle(noticia_id):
             Noticia.seccion == noticia.seccion,
             Noticia.id != noticia_id
         ).order_by(Noticia.created_at.desc()).limit(4).all()
-        return render_template('detalle.html', noticia=noticia, relacionadas=relacionadas)
+        return render_template('detalle.html', noticia=noticia, relacionadas=relacionadas, es_semana=noticia.es_noticia_semana)
     except Exception as e:
         logger.error(f"Error en ruta /noticia/{noticia_id}: {e}")
         abort(404)
@@ -193,10 +194,10 @@ def detalle(noticia_id):
 @app.route('/noticia-semana')
 def noticia_semana_detalle():
     try:
-        noticia = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).first()
+        noticia = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).order_by(Noticia.created_at.desc()).first()
         if not noticia:
             abort(404)
-        return render_template('detalle_semana.html', noticia=noticia)
+        return render_template('detalle.html', noticia=noticia, relacionadas=[], es_semana=True)
     except Exception as e:
         logger.error(f"Error en noticia-semana: {e}")
         abort(404)
@@ -216,17 +217,7 @@ def seccion(seccion):
         logger.error(f"Error en ruta /seccion/{seccion}: {e}")
         return render_template('seccion.html', seccion=seccion, noticias=[], pagination=None)
 
-@app.route('/archivo')
-def archivo():
-    try:
-        page = request.args.get('page', 1, type=int)
-        noticias_paginadas = Noticia.query.filter_by(estado='activo')\
-            .order_by(Noticia.created_at.desc())\
-            .paginate(page=page, per_page=12, error_out=False)
-        return render_template('archivo.html', noticias=noticias_paginadas.items, pagination=noticias_paginadas)
-    except Exception as e:
-        logger.error(f"Error en ruta /archivo: {e}")
-        return render_template('archivo.html', noticias=[], pagination=None)
+# NOTA: La ruta /archivo ha sido eliminada permanentemente como se solicitó.
 
 @app.route('/api/noticias')
 def api_noticias():
@@ -301,48 +292,86 @@ def admin_create_noticia():
         titulo = data.get('titulo', '').strip()
         seccion = data.get('seccion', '').strip()
         es_semana = parse_bool(data.get('es_noticia_semana'))
+        noticia_id = data.get('noticia_id', '').strip()
 
-        # Validación blindada e inteligente
         if not titulo:
             return jsonify({'error': 'El título es obligatorio'}), 400
 
         if not es_semana and not seccion:
             return jsonify({'error': 'La sección es obligatoria (excepto para Noticia de la Semana)'}), 400
 
-        # Si es noticia de la semana y no hay sección, asignar "semana" por defecto
         if es_semana and not seccion:
             seccion = 'semana'
 
+        # Si se marca como Noticia de la Semana, DESMARCAMOS todas las demás
+        if es_semana:
+            Noticia.query.filter_by(es_noticia_semana=True).update({Noticia.es_noticia_semana: False})
+            logger.info("✅ Desmarcadas todas las noticias de la semana anteriores")
+
         imagen_url = guardar_archivo(request.files.get('imagen'), 'imagen') if request.files.get('imagen') else None
         video_url = guardar_archivo(request.files.get('video_corto'), 'video') if request.files.get('video_corto') else None
-        
-        noticia = Noticia(
-            titulo=titulo,
-            resumen=data.get('resumen', '').strip(),
-            desarrollo=data.get('desarrollo', '').strip(),
-            seccion=seccion,
-            categoria=data.get('categoria', '').strip() or None,
-            imagen=imagen_url,
-            video_corto=video_url,
-            fecha=data.get('fecha', datetime.now().strftime("%d/%m/%Y")),
-            es_hero=parse_bool(data.get('es_hero')),
-            es_ticker=parse_bool(data.get('es_ticker')),
-            es_popular=parse_bool(data.get('es_popular')),
-            es_noticia_semana=es_semana,
-            es_recomendada=parse_bool(data.get('es_recomendada')),
-            modo_ultima_hora=parse_bool(data.get('modo_ultima_hora')),
-            estado='activo'
-        )
-        db.session.add(noticia)
-        db.session.commit()
-        return jsonify({'success': True, 'id': noticia.id}), 201
+
+        # MODO EDICIÓN
+        if noticia_id:
+            noticia = Noticia.query.get_or_404(int(noticia_id))
+            noticia.titulo = titulo
+            noticia.resumen = data.get('resumen', '').strip()
+            noticia.desarrollo = data.get('desarrollo', '').strip()
+            noticia.seccion = seccion
+            noticia.categoria = data.get('categoria', '').strip() or None
+            if imagen_url:
+                noticia.imagen = imagen_url
+            if video_url:
+                noticia.video_corto = video_url
+            noticia.fecha = data.get('fecha', datetime.now().strftime("%d/%m/%Y"))
+            noticia.es_hero = parse_bool(data.get('es_hero'))
+            noticia.es_ticker = parse_bool(data.get('es_ticker'))
+            noticia.es_popular = parse_bool(data.get('es_popular'))
+            noticia.es_noticia_semana = es_semana
+            noticia.es_recomendada = parse_bool(data.get('es_recomendada'))
+            noticia.updated_at = datetime.utcnow()
+            db.session.commit()
+            logger.info(f"✅ Noticia #{noticia_id} actualizada")
+            return jsonify({'success': True, 'id': noticia.id, 'action': 'update'}), 200
+        else:
+            # MODO CREACIÓN
+            noticia = Noticia(
+                titulo=titulo,
+                resumen=data.get('resumen', '').strip(),
+                desarrollo=data.get('desarrollo', '').strip(),
+                seccion=seccion,
+                categoria=data.get('categoria', '').strip() or None,
+                imagen=imagen_url,
+                video_corto=video_url,
+                fecha=data.get('fecha', datetime.now().strftime("%d/%m/%Y")),
+                es_hero=parse_bool(data.get('es_hero')),
+                es_ticker=parse_bool(data.get('es_ticker')),
+                es_popular=parse_bool(data.get('es_popular')),
+                es_noticia_semana=es_semana,
+                es_recomendada=parse_bool(data.get('es_recomendada')),
+                estado='activo'
+            )
+            db.session.add(noticia)
+            db.session.commit()
+            logger.info(f"✅ Noticia #{noticia.id} creada")
+            return jsonify({'success': True, 'id': noticia.id, 'action': 'create'}), 201
     except ValueError as ve:
         db.session.rollback()
         return jsonify({'error': str(ve)}), 400
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error al crear noticia: {e}")
+        logger.error(f"Error al guardar noticia: {e}")
         return jsonify({'error': 'Error interno al guardar la noticia'}), 500
+
+@app.route('/api/admin/noticias/<int:noticia_id>', methods=['GET'])
+@login_required
+def admin_get_noticia(noticia_id):
+    try:
+        noticia = Noticia.query.get_or_404(noticia_id)
+        return jsonify(noticia.to_dict(include_content=True)), 200
+    except Exception as e:
+        logger.error(f"Error al obtener noticia {noticia_id}: {e}")
+        return jsonify({'error': 'No se pudo cargar la noticia'}), 500
 
 @app.route('/api/admin/noticias/<int:noticia_id>', methods=['DELETE'])
 @login_required
@@ -395,16 +424,13 @@ def internal_error(error):
 def init_db():
     """Inicializa la base de datos y agrega columnas faltantes si es necesario"""
     with app.app_context():
-        # Crear tablas si no existen
         db.create_all()
         
-        # Migración automática: agregar columnas faltantes
         import sqlite3
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         
         try:
-            # Agregar columna es_noticia_semana si no existe
             cursor.execute("ALTER TABLE noticias ADD COLUMN es_noticia_semana BOOLEAN DEFAULT 0;")
             conn.commit()
             logger.info("✅ Columna 'es_noticia_semana' agregada")
@@ -413,7 +439,6 @@ def init_db():
                 logger.error(f"Error al agregar es_noticia_semana: {e}")
         
         try:
-            # Agregar columna es_recomendada si no existe
             cursor.execute("ALTER TABLE noticias ADD COLUMN es_recomendada BOOLEAN DEFAULT 0;")
             conn.commit()
             logger.info("✅ Columna 'es_recomendada' agregada")
@@ -423,7 +448,6 @@ def init_db():
         
         conn.close()
         
-        # Crear configuración de caricatura si no existe
         if not Configuracion.query.filter_by(clave='caricatura').first():
             config = Configuracion(clave='caricatura', valor='', texto='Caricatura del día')
             db.session.add(config)
