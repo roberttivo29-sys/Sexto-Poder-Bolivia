@@ -215,7 +215,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 </div>
                 <div class="form-group">
                     <label>Sección <span id="seccionRequired">*</span></label>
-                    <select name="seccion" id="seccionSelect">
+                    <select name="seccion" id="seccionSelect" required>
                         <option value="">-- Seleccionar --</option>
                         <option value="locales">Locales</option>
                         <option value="internacionales">Internacionales</option>
@@ -274,7 +274,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 <label>Flags de Portada</label>
                 <div class="flags-group">
                     <label class="flag-checkbox"><input type="checkbox" name="es_hero" value="1"> 👑 Hero Principal</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1">  Ticker</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" value="1"> 📢 Ticker</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_popular" value="1"> 🔥 Popular</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" value="1"> ⭐ Noticia Semana</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" value="1"> 💡 Recomendar</label>
@@ -330,23 +330,29 @@ document.querySelectorAll('.flag-checkbox input').forEach(cb => {
     });
 });
 
-// LÓGICA INTELIGENTE: Si es "Noticia de la Semana", la sección es opcional
+// LÓGICA BLINDADA: Si es "Noticia de la Semana", la sección es opcional
 const checkboxSemana = document.querySelector('input[name="es_noticia_semana"]');
 const seccionSelect = document.getElementById('seccionSelect');
 const seccionRequired = document.getElementById('seccionRequired');
 
-if (checkboxSemana && seccionSelect) {
-    checkboxSemana.addEventListener('change', () => {
+function updateSeccionRequirement() {
+    if (checkboxSemana && seccionSelect) {
         if (checkboxSemana.checked) {
-            // Es noticia de la semana → autoseleccionar "semana" y ocultar asterisco
+            seccionSelect.removeAttribute('required');
             seccionSelect.value = 'semana';
             if (seccionRequired) seccionRequired.style.display = 'none';
         } else {
-            // No es noticia de la semana → limpiar selección y mostrar asterisco
+            seccionSelect.setAttribute('required', 'required');
             if (seccionSelect.value === 'semana') seccionSelect.value = '';
             if (seccionRequired) seccionRequired.style.display = 'inline';
         }
-    });
+    }
+}
+
+if (checkboxSemana && seccionSelect) {
+    checkboxSemana.addEventListener('change', updateSeccionRequirement);
+    // Ejecutar al cargar por si el navegador recuerda el estado
+    updateSeccionRequirement();
 }
 
 function setupPreview(inputId, previewId, nameId, type) {
@@ -415,7 +421,7 @@ async function cargarNoticias() {
                 <td><span class="badge badge-activo">${n.seccion}</span></td>
                 <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
                 <td>
-                    ${n.es_hero ? '<span class="badge badge-hero"></span>' : ''}
+                    ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
                     ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
                     ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
                     ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
@@ -450,6 +456,7 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
             document.getElementById('imagenName').textContent = '';
             document.getElementById('videoName').textContent = '';
             document.querySelectorAll('.flag-checkbox').forEach(cb => cb.classList.remove('checked'));
+            updateSeccionRequirement(); // Restablecer estado del select
             cargarNoticias();
             document.querySelector('[data-tab="noticias"]').click();
         } else {
