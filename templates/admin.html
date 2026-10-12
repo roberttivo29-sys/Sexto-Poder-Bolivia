@@ -518,30 +518,87 @@ function cancelarEdicion() {
     showToast('Edición cancelada', 'success');
 }
 
+// ==========================================
+// MEJORA CRÍTICA: Manejo robusto del envío del formulario
+// ==========================================
 document.getElementById('formNoticia').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btnGuardarNoticia');
+    const originalBtnText = btn.innerHTML;
+    
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
     
     const formData = new FormData(e.target);
+    
+    // Debug: Ver qué se está enviando en la consola (F12)
+    console.log('📤 Enviando formulario...');
+    for (let pair of formData.entries()) {
+        if (pair[1] instanceof File && pair[1].size > 0) {
+            console.log(`📁 ${pair[0]}: ${pair[1].name} (${(pair[1].size / 1024 / 1024).toFixed(2)} MB)`);
+        } else if (pair[1] !== '') {
+            console.log(`📝 ${pair[0]}: ${pair[1]}`);
+        }
+    }
+    
     try {
-        const res = await fetch('/api/admin/noticias', { method: 'POST', body: formData });
+        console.log('⏳ Esperando respuesta del servidor...');
+        
+        const res = await fetch('/api/admin/noticias', { 
+            method: 'POST', 
+            body: formData,
+            // Aumentar timeout a 120 segundos para uploads grandes en PythonAnywhere
+            signal: AbortSignal.timeout(120000)
+        });
+        
+        console.log(`📥 Respuesta recibida: ${res.status} ${res.statusText}`);
+        console.log('Headers:', res.headers.get('content-type'));
+        
+        // Verificar si la respuesta es realmente JSON
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await res.text();
+            console.error('❌ La respuesta NO es JSON:', text.substring(0, 200));
+            throw new Error('El servidor devolvió una respuesta no válida (HTML en lugar de JSON). Revisa los logs del servidor.');
+        }
+        
         const data = await res.json();
+        console.log('✅ Datos recibidos:', data);
+        
         if (data.success) {
             const action = data.action === 'update' ? 'actualizada' : 'creada';
-            showToast('Noticia ' + action + ' correctamente');
+            showToast(`✅ Noticia ${action} correctamente`);
+            console.log(`✅ Noticia ${action} con ID: ${data.id}`);
+            
+            // Limpiar formulario
             cancelarEdicion();
-            cargarNoticias();
+            
+            // Recargar lista
+            await cargarNoticias();
+            
+            // Ir a pestaña de noticias
             document.querySelector('[data-tab="noticias"]').click();
+            
+            console.log('✅ Proceso completado exitosamente');
         } else {
-            showToast(data.error || 'Error al guardar', 'error');
+            console.error('❌ Error del servidor:', data.error);
+            showToast(`❌ ${data.error || 'Error al guardar'}`, 'error');
         }
     } catch(err) {
-        showToast('Error de conexión', 'error');
+        console.error('❌ Error completo:', err);
+        console.error('Stack:', err.stack);
+        
+        if (err.name === 'AbortError') {
+            showToast('⚠️ La petición tardó demasiado. La noticia pudo haberse guardado. Recarga la página (F5) para verificar.', 'error');
+        } else if (err.message.includes('JSON')) {
+            showToast('⚠️ Error en la respuesta del servidor. La noticia pudo haberse guardado. Recarga la página (F5) para verificar.', 'error');
+        } else {
+            showToast(`❌ Error de conexión: ${err.message}`, 'error');
+        }
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> <span id="btnGuardarText">' + (document.getElementById('noticiaId').value ? 'Actualizar Noticia' : 'Guardar Noticia') + '</span>';
+        btn.innerHTML = originalBtnText;
+        console.log('🏁 Proceso finalizado');
     }
 });
 
