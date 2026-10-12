@@ -210,6 +210,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         <form id="formNoticia" enctype="multipart/form-data" class="form-section">
             <h2><i class="fas fa-plus-circle" style="color: var(--brand-primary);" id="formIcon"></i> <span id="formTitle">Nueva Noticia</span></h2>
             <input type="hidden" name="noticia_id" id="noticiaId" value="">
+            <!-- CAMPO OCULTO PARA ESTADO - CORRECCIÓN CRÍTICA -->
+            <input type="hidden" name="estado" id="inputEstado" value="activo">
+            
             <div class="form-row">
                 <div class="form-group">
                     <label>Título *</label>
@@ -278,7 +281,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                     <label class="flag-checkbox"><input type="checkbox" name="es_hero" id="flagHero" value="1"> 👑 Hero Principal</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_ticker" id="flagTicker" value="1"> 📢 Ticker</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_popular" id="flagPopular" value="1"> 🔥 Popular</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" id="flagSemana" value="1"> ⭐ Noticia Semana</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" id="flagSemana" value="1">  Noticia Semana</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" id="flagRecomendada" value="1"> 💡 Recomendar</label>
                 </div>
             </div>
@@ -384,15 +387,31 @@ setupPreview('videoFile', 'previewVideo', 'videoName', 'video');
 setupPreview('caricaturaFile', 'previewCaricatura', 'caricaturaName', 'image');
 
 function showToast(msg, type='success') {
-    const toast = document.createElement('div');
-    toast.className = 'toast toast-' + type;
-    toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' + msg;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    try {
+        const toast = document.createElement('div');
+        if (!toast) {
+            console.error('No se pudo crear el elemento toast');
+            alert(msg);
+            return;
+        }
+        toast.className = 'toast toast-' + type;
+        toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' + msg;
+        if (document.body) {
+            document.body.appendChild(toast);
+        }
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 3500);
+    } catch(err) {
+        console.error('Error en showToast:', err);
+        alert(msg);
+    }
 }
 
 async function cargarNoticias() {
@@ -426,9 +445,9 @@ async function cargarNoticias() {
                 <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
                 <td>
                     ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
-                    ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
+                    ${n.es_ticker ? '<span class="badge badge-ticker"></span>' : ''}
                     ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
-                    ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
+                    ${n.es_recomendada ? '<span class="badge badge-recomendada"></span>' : ''}
                     ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
                 </td>
                 <td>
@@ -456,6 +475,7 @@ async function editarNoticia(id) {
         document.getElementById('inputFecha').value = noticia.fecha || '';
         document.getElementById('inputResumen').value = noticia.resumen || '';
         document.getElementById('inputDesarrollo').value = noticia.desarrollo || '';
+        document.getElementById('inputEstado').value = noticia.estado || 'activo';
         
         document.getElementById('flagHero').checked = noticia.es_hero;
         document.getElementById('flagTicker').checked = noticia.es_ticker;
@@ -501,6 +521,7 @@ async function editarNoticia(id) {
 function cancelarEdicion() {
     document.getElementById('formNoticia').reset();
     document.getElementById('noticiaId').value = '';
+    document.getElementById('inputEstado').value = 'activo'; // Resetear a activo
     document.getElementById('previewImagen').style.display = 'none';
     document.getElementById('previewVideo').style.display = 'none';
     document.getElementById('imagenName').textContent = '';
@@ -518,9 +539,6 @@ function cancelarEdicion() {
     showToast('Edición cancelada', 'success');
 }
 
-// ==========================================
-// MEJORA CRÍTICA: Manejo robusto del envío del formulario
-// ==========================================
 document.getElementById('formNoticia').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btnGuardarNoticia');
@@ -531,7 +549,6 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
     
     const formData = new FormData(e.target);
     
-    // Debug: Ver qué se está enviando en la consola (F12)
     console.log('📤 Enviando formulario...');
     for (let pair of formData.entries()) {
         if (pair[1] instanceof File && pair[1].size > 0) {
@@ -547,19 +564,17 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
         const res = await fetch('/api/admin/noticias', { 
             method: 'POST', 
             body: formData,
-            // Aumentar timeout a 120 segundos para uploads grandes en PythonAnywhere
             signal: AbortSignal.timeout(120000)
         });
         
         console.log(`📥 Respuesta recibida: ${res.status} ${res.statusText}`);
         console.log('Headers:', res.headers.get('content-type'));
         
-        // Verificar si la respuesta es realmente JSON
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await res.text();
-            console.error('❌ La respuesta NO es JSON:', text.substring(0, 200));
-            throw new Error('El servidor devolvió una respuesta no válida (HTML en lugar de JSON). Revisa los logs del servidor.');
+            console.error(' La respuesta NO es JSON:', text.substring(0, 200));
+            throw new Error('El servidor devolvió una respuesta no válida');
         }
         
         const data = await res.json();
@@ -570,13 +585,8 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
             showToast(`✅ Noticia ${action} correctamente`);
             console.log(`✅ Noticia ${action} con ID: ${data.id}`);
             
-            // Limpiar formulario
             cancelarEdicion();
-            
-            // Recargar lista
             await cargarNoticias();
-            
-            // Ir a pestaña de noticias
             document.querySelector('[data-tab="noticias"]').click();
             
             console.log('✅ Proceso completado exitosamente');
