@@ -2,9 +2,11 @@
    SEXTO PODER BOLIVIA - PORTAL DE NOTICIAS
    Paleta: Azul Oscuro + Rojo Periodístico + Dorado
    Versión Final - Sin espacios vacíos, Redes limitadas
+   Con Modo Oscuro/Claro, Logo Bebas Neue, Bottom Nav
    ========================================== */
 
 :root {
+    /* Modo Claro (por defecto) */
     --bg-deep: #0a1628;
     --bg-primary: #0f1d32;
     --bg-secondary: #152238;
@@ -43,12 +45,28 @@
     --radius-full: 9999px;
     
     --font-display: 'Playfair Display', Georgia, serif;
+    --font-logo: 'Bebas Neue', sans-serif;
     --font-body: 'Source Serif Pro', Georgia, serif;
     --font-ui: 'Inter', system-ui, sans-serif;
     
     --transition-fast: 0.2s ease;
     --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modo Oscuro */
+body.dark-mode {
+    --bg-deep: #000000;
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #111111;
+    --bg-card: #1a1a1a;
+    --bg-hover: #252525;
+    --bg-nav: #1f1f1f;
+    --text-primary: #ffffff;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-medium: rgba(255, 255, 255, 0.2);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,6 +80,7 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background var(--transition-smooth), color var(--transition-smooth);
 }
 
 .container { max-width: 1440px; margin: 0 auto; padding: 0 32px; }
@@ -105,6 +124,21 @@ img { max-width: 100%; height: auto; display: block; }
     100% { left: 100%; }
 }
 
+@keyframes ken-burns {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.15); }
+}
+
+@keyframes reveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
 /* HEADER */
 .header {
     position: sticky;
@@ -116,6 +150,10 @@ img { max-width: 100%; height: auto; display: block; }
     border-bottom: 1px solid var(--border-light);
     padding: 12px 0 8px;
     transition: all var(--transition-smooth);
+}
+
+body.dark-mode .header {
+    background: rgba(0, 0, 0, 0.95);
 }
 
 .header.scrolled {
@@ -144,8 +182,8 @@ img { max-width: 100%; height: auto; display: block; }
 .logo:hover { transform: scale(1.02); }
 
 .logo-image-wrapper {
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid var(--blue-accent);
@@ -171,30 +209,33 @@ img { max-width: 100%; height: auto; display: block; }
     gap: 2px;
 }
 
-.logo-text h1 {
-    font-family: var(--font-display);
-    font-size: 1.7rem;
-    font-weight: 900;
-    letter-spacing: 1px;
-    color: var(--text-primary);
-    text-transform: uppercase;
+/* LOGO MODERNO - BEBAS NEUE */
+.logo-title {
+    font-family: var(--font-logo);
+    font-size: 2.8rem;
+    font-weight: 400;
+    letter-spacing: 2px;
     line-height: 1;
+    margin: 0;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.logo-text h1 .highlight {
+.logo-sexto {
+    color: #ffffff;
+}
+
+.logo-poder {
     color: var(--blue-accent);
-    font-weight: 900;
-    text-shadow: 0 0 15px var(--blue-glow);
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
 }
 
 .logo-tagline {
-    font-family: var(--font-ui);
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-family: var(--font-logo);
+    font-size: 1rem;
     color: var(--gold-accent);
-    letter-spacing: 2px;
+    letter-spacing: 4px;
     text-transform: uppercase;
+    margin-top: 2px;
 }
 
 .header-controls {
@@ -225,6 +266,30 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .header-date i { color: var(--blue-accent); }
+
+/* Toggle Modo Oscuro/Claro */
+.theme-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all var(--transition-smooth);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-hover);
+    border-color: var(--blue-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow-blue);
+}
 
 .hamburger {
     display: none;
@@ -308,6 +373,55 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .nav-menu a i { font-size: 0.85rem; }
+
+/* BOTTOM NAVIGATION (solo móvil) */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 22, 40, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-light);
+    padding: 8px 0;
+    z-index: 999;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .bottom-nav {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.bottom-nav-item i {
+    font-size: 1.2rem;
+}
+
+.bottom-nav-item.active {
+    color: var(--blue-accent);
+}
+
+.bottom-nav-item:hover {
+    color: var(--blue-bright);
+}
 
 /* TICKER TITULARES */
 .breaking-news-bar {
@@ -452,7 +566,10 @@ img { max-width: 100%; height: auto; display: block; }
     transition: transform var(--transition-slow);
 }
 
-.hero-section:hover .hero-image img { transform: scale(1.05); }
+/* Efecto Ken Burns */
+.hero-section:hover .hero-image img {
+    animation: ken-burns 20s ease-in-out infinite alternate;
+}
 
 .hero-overlay {
     position: absolute;
@@ -844,7 +961,7 @@ img { max-width: 100%; height: auto; display: block; }
     gap: 4px;
 }
 
-/* CARICATURA COMPACTA - MEJORADA */
+/* CARICATURA COMPACTA */
 .cartoon-widget-compact { cursor: pointer; transition: all var(--transition-smooth); }
 .cartoon-widget-compact:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
@@ -1159,6 +1276,8 @@ img { max-width: 100%; height: auto; display: block; }
 
 .article-figure img {
     width: 100%;
+    max-height: 500px;
+    object-fit: cover;
     cursor: zoom-in;
     transition: transform var(--transition-smooth);
 }
@@ -1184,7 +1303,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .article-title {
     font-family: var(--font-display);
-    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-size: clamp(1.8rem, 3vw, 2.2rem);
     font-weight: 900;
     line-height: 1.15;
     margin-bottom: 20px;
@@ -1217,7 +1336,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .article-lead {
     font-family: var(--font-body);
-    font-size: 1.2rem;
+    font-size: 1.35rem;
     color: var(--text-secondary);
     line-height: 1.7;
     margin-bottom: 28px;
@@ -1241,14 +1360,26 @@ img { max-width: 100%; height: auto; display: block; }
     font-family: var(--font-display);
 }
 
+/* Contenedor de lectura con ancho óptimo */
+.article-body-container {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
 .article-content {
     font-family: var(--font-body);
     font-size: 1.1rem;
-    line-height: 1.9;
+    line-height: 1.8;
     color: var(--text-secondary);
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
 }
 
-.article-content p { margin-bottom: 20px; }
+.article-content p { 
+    margin-bottom: 1.5rem;
+}
 
 .article-content p:first-of-type::first-letter {
     font-family: var(--font-display);
@@ -1423,7 +1554,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .news-card-image {
-    height: 160px;
+    height: 200px;
     overflow: hidden;
     position: relative;
 }
@@ -1481,7 +1612,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .news-card-content h4 {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 1.15rem;
     font-weight: 800;
     margin-bottom: 12px;
     line-height: 1.35;
@@ -1593,7 +1724,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 .archivo-card-image { 
-    height: 160px; 
+    height: 200px; 
     overflow: hidden;
     position: relative;
 }
@@ -1652,7 +1783,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .archivo-card-title {
     font-family: var(--font-display);
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     font-weight: 800;
     margin-bottom: 12px;
     line-height: 1.3;
@@ -1723,6 +1854,13 @@ img { max-width: 100%; height: auto; display: block; }
     border-radius: 50%;
     border: 2px solid var(--blue-accent);
     object-fit: cover;
+}
+
+.footer-logo-title {
+    font-family: var(--font-logo);
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    margin: 0;
 }
 
 .footer-section h3 {
@@ -1901,9 +2039,148 @@ img { max-width: 100%; height: auto; display: block; }
     animation: fadeInUp 0.5s ease-out;
 }
 
+/* SKELETON LOADERS */
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+    height: 16px;
+    margin-bottom: 8px;
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 70%;
+    margin-bottom: 12px;
+}
+
+.skeleton-image {
+    height: 200px;
+    width: 100%;
+}
+
+/* REVEAL IMAGES */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* FOCUS MODE (Lectura enfocada) */
+body.focus-mode .header,
+body.focus-mode .bottom-nav,
+body.focus-mode .footer,
+body.focus-mode .back-to-top,
+body.focus-mode .reading-progress-bar {
+    display: none !important;
+}
+
+body.focus-mode .article-detail {
+    max-width: 720px;
+    margin: 40px auto;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+}
+
+/* WHATSAPP FLOTANTE */
+.whatsapp-float {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: #25D366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.8rem;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.4);
+    z-index: 998;
+    transition: all var(--transition-smooth);
+    animation: pulse 2s infinite;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 24px rgba(37, 211, 102, 0.6);
+}
+
+/* AUDIO PLAYER FLOTANTE */
+.audio-player-float {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    right: 20px;
+    max-width: 400px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    z-index: 998;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.3s ease-out;
+}
+
+.audio-player-float.active {
+    display: flex;
+}
+
+.audio-player-float button {
+    background: var(--blue-accent);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.audio-player-float button:hover {
+    background: var(--blue-bright);
+    transform: scale(1.1);
+}
+
+.audio-player-float .audio-info {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.audio-player-float .audio-speed {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
 /* RESPONSIVE */
 @media (max-width: 1200px) {
     .secciones-grid { grid-template-columns: repeat(2, 1fr); }
+    
+    .logo-title { font-size: 2.4rem; }
 }
 
 @media (max-width: 1024px) {
@@ -1925,6 +2202,8 @@ img { max-width: 100%; height: auto; display: block; }
         height: 200px; 
     }
     .noticia-semana-content h3 { font-size: 1.1rem; }
+    
+    .logo-title { font-size: 2.2rem; }
 }
 
 @media (max-width: 900px) {
@@ -1932,11 +2211,16 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 @media (max-width: 768px) {
-    .container { padding: 0 16px; }
+    .container { padding: 0 8px; }
     
-    .logo-text h1 { font-size: 1.4rem; }
-    .logo-image-wrapper { width: 48px; height: 48px; }
+    /* Logo en móvil - BOLIVIA oculto */
+    .logo-image-wrapper { width: 45px; height: 45px; }
+    .logo-title { font-size: 1.8rem; letter-spacing: 1px; }
     .logo-tagline { display: none; }
+    .logo-text { gap: 0; }
+    
+    .header-date { display: none; }
+    .theme-toggle { width: 36px; height: 36px; font-size: 1rem; }
     
     .hamburger { display: flex; }
     .nav-menu {
@@ -1954,23 +2238,45 @@ img { max-width: 100%; height: auto; display: block; }
     .nav-menu.active { display: flex; }
     .nav-menu a { width: 100%; justify-content: center; padding: 12px 20px; }
     
-    .header-date { display: none; }
+    /* Bottom Nav visible en móvil */
+    .bottom-nav { display: flex; }
+    
+    /* Espacio para bottom nav */
+    body { padding-bottom: 70px; }
     
     .hero-section { height: 360px; }
     .hero-content { padding: 20px; }
-    .hero-content h2 { font-size: 1.4rem; }
+    .hero-content h2 { font-size: 1.6rem; }
+    .hero-content p.lead { font-size: 0.95rem; }
     
     .secciones-grid { grid-template-columns: 1fr; }
-    .news-grid, .archivo-grid { grid-template-columns: 1fr; }
+    .news-grid, .archivo-grid { grid-template-columns: 1fr; gap: 12px; }
+    
+    .news-card-image { height: 180px; }
+    .news-card-content { padding: 10px; }
+    .news-card-content h4 { font-size: 1rem; }
     
     .footer-content { grid-template-columns: 1fr; gap: 24px; }
     
-    .article-detail { padding: 24px; margin: 20px 0; }
-    .article-title { font-size: 1.8rem; }
+    .article-detail { padding: 16px; margin: 16px 0; }
+    .article-title { font-size: 1.6rem; }
+    .article-lead { font-size: 1.05rem; padding: 12px 16px; }
+    .article-content { font-size: 1rem; line-height: 1.6; }
+    
+    /* Imagen full-bleed en móvil */
+    .article-figure {
+        margin-left: -16px;
+        margin-right: -16px;
+        border-radius: 0;
+    }
+    .article-figure img {
+        max-height: none;
+    }
+    
     .section-title { font-size: 2rem; }
     
     .hero-content p.lead, .article-lead, .article-content {
-        font-size: 0.95rem;
+        font-size: 1rem;
         line-height: 1.6;
     }
     
@@ -1994,7 +2300,6 @@ img { max-width: 100%; height: auto; display: block; }
     .recomendada-item { flex-direction: column; }
     .recomendada-image { width: 100%; height: 140px; }
     
-    /* CARICATURA RESPONSIVE MÓVIL */
     .cartoon-container-compact {
         min-height: 200px;
         padding: 12px;
@@ -2006,19 +2311,31 @@ img { max-width: 100%; height: auto; display: block; }
         font-size: 0.8rem;
         padding: 8px 10px;
     }
+    
+    /* WhatsApp flotante ajustado para bottom nav */
+    .whatsapp-float {
+        bottom: 90px;
+        right: 12px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .audio-player-float {
+        bottom: 80px;
+        left: 8px;
+        right: 8px;
+        max-width: none;
+    }
 }
 
 @media (max-width: 480px) {
     .hero-content p.lead { font-size: 0.9rem; }
     
-    .logo-text h1 { font-size: 1.1rem; }
+    .logo-title { font-size: 1.6rem; }
     .logo-image-wrapper { width: 40px; height: 40px; }
     
     .section-title { font-size: 1.6rem; }
-    
-    .news-card-image, .seccion-card-image, .archivo-card-image {
-        height: 180px;
-    }
     
     .btn-read-more {
         width: 100%;

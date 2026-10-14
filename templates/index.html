@@ -27,10 +27,10 @@
     <!-- Layout Principal: 2 columnas equilibradas -->
     <div class="main-layout">
         
-        <!-- COLUMNA IZQUIERDA: Hero + Semana + Recomendadas -->
+        <!-- COLUMNA IZQUIERDA: Hero + Caricatura + Últimas -->
         <div class="column-left">
             
-            <!-- Hero Principal -->
+            <!-- 1. Hero Principal -->
             {% if hero %}
             <a href="/noticia/{{ hero.id }}" class="hero-section">
                 <div class="hero-image">
@@ -48,62 +48,25 @@
             </a>
             {% endif %}
 
-            <!-- Noticia de la Semana (Extendida) -->
-            {% if noticia_semana %}
-            <a href="/noticia-semana" class="noticia-semana-widget">
-                <div class="noticia-semana-header">
-                    <i class="fas fa-star"></i> Noticia de la Semana
+            <!-- 2. Caricatura del Día -->
+            {% if caricatura %}
+            <div class="widget cartoon-widget-compact">
+                <h3 class="widget-title">
+                    <i class="fas fa-paint-brush" style="color: var(--gold-accent);"></i> Caricatura
+                </h3>
+                <div class="cartoon-container-compact">
+                    <img src="{{ caricatura.valor or 'https://placehold.co/400x250/1e293b/FFF?text=Caricatura' }}" 
+                         alt="Caricatura del día" 
+                         loading="lazy" 
+                         onclick="openLightbox(this)">
                 </div>
-                <div class="noticia-semana-body">
-                    {% if noticia_semana.imagen %}
-                    <div class="noticia-semana-image">
-                        <img src="{{ noticia_semana.imagen }}" alt="{{ noticia_semana.titulo }}" loading="lazy">
-                    </div>
-                    {% endif %}
-                    <div class="noticia-semana-content">
-                        <h3>{{ noticia_semana.titulo }}</h3>
-                        {% if noticia_semana.resumen %}
-                        <p>{{ noticia_semana.resumen[:150] }}...</p>
-                        {% endif %}
-                        <span class="btn-leer-mas">Leer seguimiento completo <i class="fas fa-arrow-right"></i></span>
-                    </div>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- INNOVACIÓN: También te puede interesar -->
-            {% if recomendadas %}
-            <div class="recomendadas-widget">
-                <div class="recomendadas-header">
-                    <i class="fas fa-compass"></i> También te puede interesar
-                </div>
-                <div class="recomendadas-list">
-                    {% for nota in recomendadas %}
-                    <a href="/noticia/{{ nota.id }}" class="recomendada-item">
-                        {% if nota.imagen %}
-                        <div class="recomendada-image">
-                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
-                        </div>
-                        {% endif %}
-                        <div class="recomendada-content">
-                            <span class="recomendada-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
-                            <h4>{{ nota.titulo }}</h4>
-                            <span class="recomendada-date">
-                                <i class="far fa-clock"></i> {{ nota.fecha }}
-                            </span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
+                {% if caricatura.texto %}
+                <p class="caricatura-caption-compact">{{ caricatura.texto }}</p>
+                {% endif %}
             </div>
             {% endif %}
 
-        </div>
-
-        <!-- COLUMNA DERECHA: Últimas + Caricatura + Redes -->
-        <aside class="sidebar">
-            
-            <!-- Últimas Noticias -->
+            <!-- 3. Últimas Noticias -->
             {% if ultimas_noticias %}
             <div class="widget">
                 <h3 class="widget-title">
@@ -130,25 +93,62 @@
             </div>
             {% endif %}
 
-            <!-- Caricatura Compacta -->
-            {% if caricatura %}
-            <div class="widget cartoon-widget-compact">
-                <h3 class="widget-title">
-                    <i class="fas fa-paint-brush" style="color: var(--gold-accent);"></i> Caricatura
-                </h3>
-                <div class="cartoon-container-compact">
-                    <img src="{{ caricatura.valor or 'https://placehold.co/400x250/1e293b/FFF?text=Caricatura' }}" 
-                         alt="Caricatura del día" 
-                         loading="lazy" 
-                         onclick="openLightbox(this)">
+        </div>
+
+        <!-- COLUMNA DERECHA: Semana + Recomendadas + Redes -->
+        <aside class="sidebar">
+            
+            <!-- 4. Noticia de la Semana (Extendida) -->
+            {% if noticia_semana %}
+            <a href="/noticia-semana" class="noticia-semana-widget">
+                <div class="noticia-semana-header">
+                    <i class="fas fa-star"></i> Noticia de la Semana
                 </div>
-                {% if caricatura.texto %}
-                <p class="caricatura-caption-compact">{{ caricatura.texto }}</p>
-                {% endif %}
+                <div class="noticia-semana-body">
+                    {% if noticia_semana.imagen %}
+                    <div class="noticia-semana-image">
+                        <img src="{{ noticia_semana.imagen }}" alt="{{ noticia_semana.titulo }}" loading="lazy">
+                    </div>
+                    {% endif %}
+                    <div class="noticia-semana-content">
+                        <h3>{{ noticia_semana.titulo }}</h3>
+                        {% if noticia_semana.resumen %}
+                        <p>{{ noticia_semana.resumen[:150] }}...</p>
+                        {% endif %}
+                        <span class="btn-leer-mas">Leer seguimiento completo <i class="fas fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- 5. También te puede interesar -->
+            {% if recomendadas %}
+            <div class="recomendadas-widget">
+                <div class="recomendadas-header">
+                    <i class="fas fa-compass"></i> También te puede interesar
+                </div>
+                <div class="recomendadas-list">
+                    {% for nota in recomendadas %}
+                    <a href="/noticia/{{ nota.id }}" class="recomendada-item">
+                        {% if nota.imagen %}
+                        <div class="recomendada-image">
+                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="recomendada-content">
+                            <span class="recomendada-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
+                            <h4>{{ nota.titulo }}</h4>
+                            <span class="recomendada-date">
+                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
             {% endif %}
 
-            <!-- Síguenos (SOLO FACEBOOK Y TIKTOK) -->
+            <!-- 6. Síguenos (SOLO FACEBOOK Y TIKTOK) -->
             <div class="widget">
                 <h3 class="widget-title">
                     <i class="fas fa-share-nodes" style="color: var(--blue-accent);"></i> Síguenos
@@ -174,7 +174,7 @@
         </aside>
     </div>
 
-    <!-- Secciones Destacadas (full width) -->
+    <!-- 7. Secciones Destacadas (full width) -->
     <div class="secciones-destacadas">
         <div class="section-header">
             <h2>Explora por Secciones</h2>
