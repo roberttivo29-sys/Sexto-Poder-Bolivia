@@ -2,7 +2,7 @@
    SEXTO PODER BOLIVIA - PORTAL DE NOTICIAS
    Paleta: Azul Oscuro + Cian Eléctrico + Dorado
    Tipografía: Orbitron (Logo futurista)
-   Versión Final: Orden móvil forzado + Últimas compactas
+   Versión Final: Orden móvil con display:contents
    ========================================== */
 
 :root {
@@ -426,6 +426,20 @@ body.dark-mode .header { background: rgba(0, 0, 0, 0.95); }
 .ticker-item:hover {
     text-decoration: underline;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* TÍTULO MINIMALISTA DE SECCIÓN */
+.seccion-title-minimal {
+    text-align: center;
+    margin: 20px 0 10px 0;
+}
+.seccion-title-minimal h2 {
+    font-family: var(--font-logo);
+    font-size: 1.5rem;
+    color: var(--gold-accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px var(--gold-glow);
 }
 
 /* LAYOUT PRINCIPAL */
@@ -1573,6 +1587,40 @@ body.dark-mode .header { background: rgba(0, 0, 0, 0.95); }
     opacity: 0.8;
 }
 
+/* PAGINACIÓN */
+.pagination-container {
+    text-align: center;
+    margin: 40px 0;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.pagination-btn {
+    padding: 10px 18px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-smooth);
+    font-weight: 600;
+}
+.pagination-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--blue-accent);
+    color: var(--blue-accent);
+}
+.pagination-btn.active {
+    background: var(--blue-accent);
+    color: white;
+    border-color: var(--blue-accent);
+}
+.pagination-dots {
+    padding: 10px 18px;
+    color: var(--text-muted);
+}
+
 /* FOOTER */
 .footer {
     background: var(--bg-primary);
@@ -1943,40 +1991,27 @@ body.focus-mode .article-detail {
     .nav-menu a { width: 100%; justify-content: center; padding: 12px 20px; }
     
     /* ==========================================
-       FORZAR ORDEN MÓVIL CON !important
-       1. Hero
-       2. Caricatura
-       3. Últimas Noticias
-       4. Noticia de la Semana
-       5. También te puede interesar
-       6. Redes
+       ORDEN MÓVIL CON display:contents
+       Esto "disuelve" .column-left y .sidebar
+       para que todos sus hijos sean hermanos
+       directos de .main-layout
        ========================================== */
     .main-layout {
         display: flex !important;
         flex-direction: column !important;
         gap: 12px !important;
     }
-    .column-left {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        order: 1 !important;
-    }
+    .column-left,
     .sidebar {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 12px !important;
-        order: 2 !important;
+        display: contents !important;
     }
     
-    /* ORDEN DENTRO DE column-left */
+    /* ORDEN DE TODOS LOS ELEMENTOS */
     .hero-section { order: 1 !important; }
-    .noticia-semana-widget { order: 4 !important; }
-    .recomendadas-widget { order: 5 !important; }
-    
-    /* ORDEN DENTRO DE sidebar */
     .widget-caricatura { order: 2 !important; }
     .widget-ultimas { order: 3 !important; }
+    .noticia-semana-widget { order: 4 !important; }
+    .recomendadas-widget { order: 5 !important; }
     .widget-redes { order: 6 !important; }
     
     /* Mostrar imagen en móvil para últimas noticias */

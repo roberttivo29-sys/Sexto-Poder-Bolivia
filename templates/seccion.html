@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}{{ seccion_nombre|title }} | Sexto Poder Bolivia{% endblock %}
-{% block description %}Últimas noticias de {{ seccion_nombre|title }} en Sexto Poder Bolivia. Información veraz y sin censura.{% endblock %}
+{% block title %}{{ seccion|title }} | Sexto Poder Bolivia{% endblock %}
+{% block description %}Últimas noticias de {{ seccion|title }} en Sexto Poder Bolivia. Información veraz y sin censura.{% endblock %}
 
 {% block content %}
 <main class="container" id="main-content">
     
-    <!-- Barra de Ticker TITULARES (si existe) -->
+    <!-- Barra de Ticker TITULARES -->
     {% if ticker %}
     <div class="breaking-news-bar">
         <div class="breaking-label">
@@ -24,14 +24,12 @@
     </div>
     {% endif %}
 
-    <!-- Título minimalista de la sección (opcional, muy sutil) -->
-    <div style="text-align: center; margin: 20px 0 10px 0;">
-        <h2 style="font-family: var(--font-logo); font-size: 1.5rem; color: var(--gold-accent); letter-spacing: 3px; text-transform: uppercase;">
-            {{ seccion_nombre|title }}
-        </h2>
+    <!-- Título minimalista de la sección -->
+    <div class="seccion-title-minimal">
+        <h2>{{ seccion|replace('-', ' ')|title }}</h2>
     </div>
 
-    <!-- Grilla de noticias (aparece inmediatamente, sin headers gigantes) -->
+    <!-- Grilla de noticias -->
     <div class="news-grid">
         {% for nota in noticias %}
         <a href="/noticia/{{ nota.id }}" class="news-card">
@@ -63,6 +61,35 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- Paginación -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination-container">
+        {% if pagination.has_prev %}
+        <a href="?page={{ pagination.prev_num }}" class="pagination-btn">
+            <i class="fas fa-chevron-left"></i> Anterior
+        </a>
+        {% endif %}
+        
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+                {% if page_num == pagination.page %}
+                <span class="pagination-btn active">{{ page_num }}</span>
+                {% else %}
+                <a href="?page={{ page_num }}" class="pagination-btn">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="pagination-dots">...</span>
+            {% endif %}
+        {% endfor %}
+        
+        {% if pagination.has_next %}
+        <a href="?page={{ pagination.next_num }}" class="pagination-btn">
+            Siguiente <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 
 </main>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ noticia.titulo }} | Sexto Poder Bolivia{% endblock %}
-{% block description %}{{ noticia.resumen[:150] }}{% endblock %}
+{% block description %}{{ noticia.resumen[:150] if noticia.resumen else noticia.titulo }}{% endblock %}
 
 {% block content %}
 <article class="article-detail">
@@ -39,10 +39,9 @@
     <p class="article-lead">{{ noticia.resumen }}</p>
     {% endif %}
 
-    <!-- Desarrollo de la nota (Ancho limitado a 720px para lectura óptima) -->
+    <!-- Desarrollo de la nota -->
     <div class="article-body-container">
         <div class="article-content">
-            <!-- Se asume que el desarrollo viene con saltos de línea o HTML desde el admin -->
             {{ noticia.desarrollo | safe }}
         </div>
     </div>
@@ -57,7 +56,7 @@
 </article>
 {% endblock %}
 
-<!-- Botón WhatsApp Flotante (inyectado en el body) -->
+<!-- Botón WhatsApp Flotante -->
 {% block whatsapp_button %}
 <a href="https://wa.me/?text={{ '¡Mira esta nota de Sexto Poder Bolivia! ' + noticia.titulo + ' ' + request.url | urlencode }}" 
    target="_blank" 
@@ -97,7 +96,7 @@ function openLightbox(img) {
     document.body.appendChild(lightbox);
 }
 
-// Funcionalidad de Audio (Web Speech API)
+// Funcionalidad de Audio (Web Speech API) - Compatible con móvil
 document.addEventListener('DOMContentLoaded', () => {
     const articleContent = document.querySelector('.article-content');
     if (!articleContent) return;
@@ -109,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let speech = new SpeechSynthesisUtterance();
     let isPlaying = false;
+    let currentSpeed = 1;
 
     // Mostrar el reproductor si hay contenido
     if (articleContent.innerText.trim().length > 50) {
@@ -127,6 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.speechSynthesis.paused) {
                 window.speechSynthesis.resume();
             } else {
+                window.speechSynthesis.cancel();
+                speech.rate = currentSpeed;
                 window.speechSynthesis.speak(speech);
             }
             playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
@@ -141,7 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     speedSelect.addEventListener('change', (e) => {
-        speech.rate = parseFloat(e.target.value);
+        currentSpeed = parseFloat(e.target.value);
+        speech.rate = currentSpeed;
         if (isPlaying) {
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(speech);
@@ -149,6 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     speech.onend = () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        isPlaying = false;
+    };
+
+    speech.onerror = (e) => {
+        console.error('Error de síntesis de voz:', e);
         playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
         isPlaying = false;
     };
