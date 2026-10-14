@@ -103,7 +103,7 @@
         <!-- COLUMNA DERECHA (SIDEBAR): Últimas + Caricatura + Redes -->
         <aside class="sidebar">
             
-            <!-- 4. Últimas Noticias -->
+            <!-- 4. Últimas Noticias (SOLO TEXTO EN DESKTOP) -->
             {% if ultimas_noticias %}
             <div class="widget widget-ultimas">
                 <h3 class="widget-title">
@@ -119,7 +119,7 @@
                         {% endif %}
                         <div class="ultima-item-content">
                             <span class="ultima-item-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
-                            <h4>{{ nota.titulo[:60] }}{% if nota.titulo|length > 60 %}...{% endif %}</h4>
+                            <h4>{{ nota.titulo }}</h4>
                             <span class="ultima-item-date">
                                 <i class="far fa-clock"></i> {{ nota.fecha }}
                             </span>

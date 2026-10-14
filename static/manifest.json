@@ -1,0 +1,29 @@
+{
+    "name": "Sexto Poder Bolivia",
+    "short_name": "Sexto Poder",
+    "description": "Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a1628",
+    "theme_color": "#00D4FF",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/static/img/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/img/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["news", "media"],
+    "lang": "es-BO",
+    "dir": "ltr",
+    "scope": "/",
+    "prefer_related_applications": false
+}

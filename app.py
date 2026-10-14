@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SEXTO PODER BOLIVIA - Backend Flask v5.8
+SEXTO PODER BOLIVIA - Backend Flask v5.9
 Incluye: Hero, Ticker, Últimas, Semana (Transversal), Recomendadas
 Migración automática + Gestión exclusiva de Noticia de la Semana + EDICIÓN
+Manejo robusto de errores y logging mejorado
 """
 
 import os
 import time
 import logging
+import traceback
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -35,9 +37,13 @@ app.secret_key = os.environ.get('SECRET_KEY', 'sexto-poder-2026-clave-secreta-ro
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 app.config['NOTICIAS_POR_PAGINA'] = 6
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 db = SQLAlchemy(app)
@@ -116,6 +122,7 @@ def guardar_archivo(file, tipo='imagen'):
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], final_name)
     try:
         file.save(filepath)
+        logger.info(f"✅ Archivo guardado: {final_name}")
         return f"/static/img/uploads/{final_name}"
     except Exception as e:
         logger.error(f"Error al guardar archivo: {e}")
@@ -124,6 +131,8 @@ def guardar_archivo(file, tipo='imagen'):
 def parse_bool(value):
     if isinstance(value, bool):
         return value
+    if value is None:
+        return False
     return str(value).lower() in ['1', 'true', 'on', 'yes', 'si', 'sí']
 
 def login_required(f):
@@ -151,7 +160,6 @@ def index():
         if not ultimas_noticias:
             ultimas_noticias = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(4).all()
 
-        # CORRECCIÓN: Tomar la noticia de la semana más reciente y activa
         noticia_semana = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).order_by(Noticia.created_at.desc()).first()
 
         recomendadas = Noticia.query.filter_by(estado='activo', es_recomendada=True).order_by(Noticia.created_at.desc()).limit(3).all()
@@ -175,6 +183,7 @@ def index():
         )
     except Exception as e:
         logger.error(f"Error crítico en ruta / (index): {e}")
+        logger.error(traceback.format_exc())
         return render_template('index.html', hero=None, ticker=[], ultimas_noticias=[], noticia_semana=None, recomendadas=[], caricatura=None, destacadas_principal=[])
 
 @app.route('/noticia/<int:noticia_id>')
@@ -216,8 +225,6 @@ def seccion(seccion):
     except Exception as e:
         logger.error(f"Error en ruta /seccion/{seccion}: {e}")
         return render_template('seccion.html', seccion=seccion, noticias=[], pagination=None)
-
-# NOTA: La ruta /archivo ha sido eliminada permanentemente como se solicitó.
 
 @app.route('/api/noticias')
 def api_noticias():
@@ -288,24 +295,37 @@ def admin_list_noticias():
 @login_required
 def admin_create_noticia():
     try:
+        logger.info(f" Recibiendo petición para crear/editar noticia")
+        logger.info(f"Method: {request.method}")
+        logger.info(f"Content-Type: {request.content_type}")
+        
         data = request.form
         titulo = data.get('titulo', '').strip()
         seccion = data.get('seccion', '').strip()
         es_semana = parse_bool(data.get('es_noticia_semana'))
         noticia_id = data.get('noticia_id', '').strip()
 
+        logger.info(f"Título: {titulo[:50]}...")
+        logger.info(f"Sección: {seccion}")
+        logger.info(f"Es Semana: {es_semana}")
+        logger.info(f"ID Noticia: {noticia_id if noticia_id else 'Nueva'}")
+
         if not titulo:
+            logger.error("❌ Error: Título vacío")
             return jsonify({'error': 'El título es obligatorio'}), 400
 
         if not es_semana and not seccion:
+            logger.error("❌ Error: Sección vacía y no es noticia de semana")
             return jsonify({'error': 'La sección es obligatoria (excepto para Noticia de la Semana)'}), 400
 
         if es_semana and not seccion:
             seccion = 'semana'
+            logger.info("✅ Sección asignada automáticamente: 'semana'")
 
         # Si se marca como Noticia de la Semana, DESMARCAMOS todas las demás
         if es_semana:
             Noticia.query.filter_by(es_noticia_semana=True).update({Noticia.es_noticia_semana: False})
+            db.session.commit()
             logger.info("✅ Desmarcadas todas las noticias de la semana anteriores")
 
         imagen_url = guardar_archivo(request.files.get('imagen'), 'imagen') if request.files.get('imagen') else None
@@ -313,6 +333,7 @@ def admin_create_noticia():
 
         # MODO EDICIÓN
         if noticia_id:
+            logger.info(f"✏️ Modo EDICIÓN para noticia #{noticia_id}")
             noticia = Noticia.query.get_or_404(int(noticia_id))
             noticia.titulo = titulo
             noticia.resumen = data.get('resumen', '').strip()
@@ -331,10 +352,11 @@ def admin_create_noticia():
             noticia.es_recomendada = parse_bool(data.get('es_recomendada'))
             noticia.updated_at = datetime.utcnow()
             db.session.commit()
-            logger.info(f"✅ Noticia #{noticia_id} actualizada")
+            logger.info(f"✅ Noticia #{noticia_id} actualizada correctamente")
             return jsonify({'success': True, 'id': noticia.id, 'action': 'update'}), 200
         else:
             # MODO CREACIÓN
+            logger.info("➕ Modo CREACIÓN de nueva noticia")
             noticia = Noticia(
                 titulo=titulo,
                 resumen=data.get('resumen', '').strip(),
@@ -353,15 +375,19 @@ def admin_create_noticia():
             )
             db.session.add(noticia)
             db.session.commit()
-            logger.info(f"✅ Noticia #{noticia.id} creada")
+            logger.info(f"✅ Noticia #{noticia.id} creada correctamente")
             return jsonify({'success': True, 'id': noticia.id, 'action': 'create'}), 201
+            
     except ValueError as ve:
         db.session.rollback()
+        logger.error(f"❌ Error de valor: {ve}")
+        logger.error(traceback.format_exc())
         return jsonify({'error': str(ve)}), 400
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error al guardar noticia: {e}")
-        return jsonify({'error': 'Error interno al guardar la noticia'}), 500
+        logger.error(f"❌ Error al guardar noticia: {e}")
+        logger.error(traceback.format_exc())
+        return jsonify({'error': f'Error interno al guardar la noticia: {str(e)}'}), 500
 
 @app.route('/api/admin/noticias/<int:noticia_id>', methods=['GET'])
 @login_required
@@ -417,6 +443,7 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
+    logger.error(f"Error 500: {error}")
     if request.path.startswith('/api/'):
         return jsonify({'error': 'Error interno del servidor'}), 500
     return render_template('500.html'), 500

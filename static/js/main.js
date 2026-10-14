@@ -1,6 +1,6 @@
 /**
  * SEXTO PODER BOLIVIA - Main JavaScript
- * Versión: 5.2.0 - Optimizado, sin errores y con soporte para nuevos widgets
+ * Versión: 6.0.0 - Con Modo Oscuro, PWA y Búsqueda Instantánea
  * Fecha: Octubre 2026
  */
 
@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
     const isSlowConnection = () => {
         const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         return conn && ['slow-2g', '2g', '3g'].includes(conn.effectiveType);
@@ -43,10 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dateEl) {
         const now = new Date();
         const formatted = now.toLocaleDateString('es-BO', { 
-            weekday: 'long',
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric' 
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
         });
         dateEl.textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
     }
@@ -116,14 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleScroll = throttle(() => {
         const scrollY = window.scrollY;
-
-        if (header) {
-            header.classList.toggle('scrolled', scrollY > 50);
-        }
-
-        if (backToTop) {
-            backToTop.classList.toggle('visible', scrollY > 400);
-        }
+        if (header) header.classList.toggle('scrolled', scrollY > 50);
+        if (backToTop) backToTop.classList.toggle('visible', scrollY > 400);
 
         if (progressBar) {
             const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -144,11 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. ANIMACIONES DE ENTRADA CON INTERSECTION OBSERVER
     // ==========================================
     if (!isSlowConnection() && 'IntersectionObserver' in window) {
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
         const fadeInObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -175,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!img) return;
 
         document.body.style.overflow = 'hidden';
-
         const lb = document.createElement('div');
         lb.className = 'lightbox active';
         lb.setAttribute('role', 'dialog');
@@ -188,10 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.body.appendChild(lb);
-
-        const handleEsc = (e) => {
-            if (e.key === 'Escape') closeLightbox(lb);
-        };
+        const handleEsc = (e) => { if (e.key === 'Escape') closeLightbox(lb); };
         document.addEventListener('keydown', handleEsc);
         lb._escHandler = handleEsc;
         lb.focus();
@@ -211,18 +193,13 @@ document.addEventListener('DOMContentLoaded', () => {
         anchor.addEventListener('click', function(e) {
             const targetId = this.getAttribute('href');
             if (targetId === '#') return;
-            
             const targetElement = document.querySelector(targetId);
             if (targetElement) {
                 e.preventDefault();
                 const headerOffset = 80;
                 const elementPosition = targetElement.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                });
+                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
             }
         });
     });
@@ -235,8 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (heroImage) {
             window.addEventListener('scroll', throttle(() => {
                 const scrolled = window.pageYOffset;
-                const rate = scrolled * 0.3;
-                heroImage.style.transform = `translateY(${rate}px) scale(1.1)`;
+                heroImage.style.transform = `translateY(${scrolled * 0.3}px) scale(1.1)`;
             }, 16), { passive: true });
         }
     }
@@ -257,10 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-
-        document.querySelectorAll('img[data-src]').forEach(img => {
-            imgObserver.observe(img);
-        });
+        document.querySelectorAll('img[data-src]').forEach(img => imgObserver.observe(img));
     }
 
     // ==========================================
@@ -271,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 11. CONTADOR DE TIEMPO DE LECTURA (Para artículos)
+    // 11. CONTADOR DE TIEMPO DE LECTURA
     // ==========================================
     const articleContent = document.querySelector('.article-content');
     if (articleContent) {
@@ -279,54 +252,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const wordsPerMinute = 200;
         const wordCount = text.split(/\s+/).length;
         const readingTime = Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-        
         const readingTimeEl = document.getElementById('reading-time');
-        if (readingTimeEl) {
-            readingTimeEl.textContent = `${readingTime} min de lectura`;
-        }
+        if (readingTimeEl) readingTimeEl.textContent = `${readingTime} min de lectura`;
     }
 
     // ==========================================
     // 12. COMPARTIR EN REDES SOCIALES
     // ==========================================
-    const shareButtons = document.querySelectorAll('.share-button');
-    shareButtons.forEach(btn => {
+    document.querySelectorAll('.share-button').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const platform = this.dataset.platform;
             const url = encodeURIComponent(window.location.href);
             const title = encodeURIComponent(document.title);
-            
             let shareUrl = '';
-            switch(platform) {
-                case 'facebook':
-                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-                    break;
-                case 'twitter':
-                    shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
-                    break;
-                case 'whatsapp':
-                    shareUrl = `https://wa.me/?text=${title}%20${url}`;
-                    break;
-                case 'telegram':
-                    shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
-                    break;
-            }
             
-            if (shareUrl) {
-                window.open(shareUrl, '_blank', 'width=600,height=400');
-            }
+            if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+            else if (platform === 'twitter') shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+            else if (platform === 'whatsapp') shareUrl = `https://wa.me/?text=${title}%20${url}`;
+            else if (platform === 'telegram') shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
+            
+            if (shareUrl) window.open(shareUrl, '_blank', 'width=600,height=400');
         });
     });
 
     // ==========================================
     // 13. MARCAR NOTICIAS COMO LEÍDAS (LocalStorage)
     // ==========================================
-    const newsCards = document.querySelectorAll('.news-card, .seccion-card, .featured-card, .archivo-card');
-    newsCards.forEach(card => {
+    document.querySelectorAll('.news-card, .seccion-card, .featured-card, .archivo-card').forEach(card => {
         let noticiaId = null;
         const link = card.querySelector('a[href^="/noticia/"]');
-        
         if (link) {
             noticiaId = link.getAttribute('href').replace('/noticia/', '').split('/')[0];
         } else if (card.getAttribute('onclick')) {
@@ -335,10 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (noticiaId) {
-            if (localStorage.getItem(`noticia_leida_${noticiaId}`)) {
-                card.classList.add('read');
-            }
-            
+            if (localStorage.getItem(`noticia_leida_${noticiaId}`)) card.classList.add('read');
             card.addEventListener('click', () => {
                 localStorage.setItem(`noticia_leida_${noticiaId}`, 'true');
                 card.classList.add('read');
@@ -349,8 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 14. PRECARGAR IMÁGENES CRÍTICAS
     // ==========================================
-    const criticalImages = document.querySelectorAll('img[fetchpriority="high"]');
-    criticalImages.forEach(img => {
+    document.querySelectorAll('img[fetchpriority="high"]').forEach(img => {
         const preloadLink = document.createElement('link');
         preloadLink.rel = 'preload';
         preloadLink.as = 'image';
@@ -359,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // 15. SOPORTE PARA NUEVOS ELEMENTOS (v5.2)
+    // 15. SOPORTE PARA NUEVOS ELEMENTOS (Widgets)
     // ==========================================
     if (!isSlowConnection() && 'IntersectionObserver' in window) {
         const widgetObserver = new IntersectionObserver((entries) => {
@@ -380,4 +331,88 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ==========================================
+    // 16. MODO OSCURO / CLARO (NUEVO)
+    // ==========================================
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    const applyTheme = (isDark) => {
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            if (themeIcon) themeIcon.classList.replace('fa-moon', 'fa-sun');
+            localStorage.setItem('sexto-poder-theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            if (themeIcon) themeIcon.classList.replace('fa-sun', 'fa-moon');
+            localStorage.setItem('sexto-poder-theme', 'light');
+        }
+    };
+
+    // Verificar preferencia guardada o del sistema
+    const savedTheme = localStorage.getItem('sexto-poder-theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        applyTheme(true);
+    } else {
+        applyTheme(false);
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            applyTheme(!isDark);
+        });
+    }
+
+    // ==========================================
+    // 17. REGISTRO DE SERVICE WORKER (PWA) (NUEVO)
+    // ==========================================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/service-worker.js')
+                .then(registration => console.log('SW registrado:', registration.scope))
+                .catch(error => console.log('Fallo en registro SW:', error));
+        });
+    }
+
+    // ==========================================
+    // 18. BÚSQUEDA INSTANTÁNEA (NUEVO)
+    // ==========================================
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    
+    if (searchInput && searchResults) {
+        searchInput.addEventListener('input', debounce(async (e) => {
+            const query = e.target.value.trim();
+            if (query.length < 3) {
+                searchResults.innerHTML = '';
+                searchResults.style.display = 'none';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    searchResults.innerHTML = data.map(n => `
+                        <a href="/noticia/${n.id}" class="search-item" style="display:block; padding:10px; border-bottom:1px solid var(--border-light); color:var(--text-primary); text-decoration:none;">
+                            <strong>${n.titulo}</strong><br>
+                            <small style="color:var(--text-muted)">${n.seccion} • ${n.fecha}</small>
+                        </a>
+                    `).join('');
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.innerHTML = '<div style="padding:10px; color:var(--text-muted)">No se encontraron resultados</div>';
+                    searchResults.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Error en búsqueda:', err);
+            }
+        }, 300));
+        
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    }
 });

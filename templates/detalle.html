@@ -1,80 +1,157 @@
 {% extends "base.html" %}
-{% block title %}{{ noticia.titulo }} • Sexto Poder Bolivia{% endblock %}
-{% block description %}{{ noticia.resumen | default('Lee esta noticia en Sexto Poder Bolivia.') }}{% endblock %}
+{% block title %}{{ noticia.titulo }} | Sexto Poder Bolivia{% endblock %}
+{% block description %}{{ noticia.resumen[:150] }}{% endblock %}
 
 {% block content %}
-<main class="container">
-    <article class="article-detail" itemscope itemtype="https://schema.org/NewsArticle">
-        <nav style="margin-bottom: 24px; font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 8px;">
-            <a href="/" style="color: var(--text-muted);"><i class="fas fa-home"></i> Inicio</a> 
-            <i class="fas fa-chevron-right" style="font-size: 0.6rem; align-self: center;"></i>
-            <a href="/seccion/{{ noticia.seccion }}" style="color: var(--blue-accent);">{{ noticia.seccion|replace('-', ' ')|title }}</a>
-        </nav>
+<article class="article-detail">
+    
+    <!-- Imagen Principal -->
+    {% if noticia.imagen %}
+    <figure class="article-figure">
+        <img src="{{ noticia.imagen }}" alt="{{ noticia.titulo }}" loading="eager" onclick="openLightbox(this)">
+    </figure>
+    {% endif %}
 
-        <header>
-            <h1 class="article-title" itemprop="headline">{{ noticia.titulo }}</h1>
-            <div class="article-meta">
-                <span><i class="far fa-calendar"></i> <time>{{ noticia.fecha }}</time></span>
-                {% if noticia.categoria %}<span><i class="fas fa-tag"></i> {{ noticia.categoria }}</span>{% endif %}
-                <span><i class="far fa-clock"></i> <span id="reading-time">Calculando...</span></span>
-            </div>
-        </header>
+    <!-- Video Corto (si existe) -->
+    {% if noticia.video_corto %}
+    <div class="short-video-container">
+        <div class="video-badge"><i class="fas fa-play"></i> VIDEO</div>
+        <video controls poster="{{ noticia.imagen or '' }}">
+            <source src="{{ noticia.video_corto }}" type="video/mp4">
+            Tu navegador no soporta el elemento de video.
+        </video>
+    </div>
+    {% endif %}
 
-        {% if noticia.imagen %}
-        <figure class="article-figure">
-            <img src="{{ noticia.imagen }}" alt="{{ noticia.titulo }}" onclick="openLightbox(this)">
-        </figure>
+    <!-- Título y Metadatos -->
+    <h1 class="article-title">{{ noticia.titulo }}</h1>
+    
+    <div class="article-meta">
+        <span><i class="fas fa-folder"></i> {{ noticia.seccion|replace('-', ' ')|title }}</span>
+        <span><i class="far fa-calendar-alt"></i> {{ noticia.fecha }}</span>
+        {% if noticia.categoria %}
+        <span><i class="fas fa-tag"></i> {{ noticia.categoria }}</span>
         {% endif %}
+    </div>
 
-        {% if noticia.video_corto %}
-        <div class="short-video-container">
-            <div class="video-badge"><i class="fas fa-play"></i> VIDEO EXCLUSIVO</div>
-            <video controls poster="{{ noticia.imagen or '' }}">
-                <source src="{{ noticia.video_corto }}" type="video/mp4">
-            </video>
-        </div>
-        {% endif %}
+    <!-- Resumen (Lead) -->
+    {% if noticia.resumen %}
+    <p class="article-lead">{{ noticia.resumen }}</p>
+    {% endif %}
 
-        <div class="article-body">
-            {% if noticia.resumen %}
-            <div class="article-lead">{{ noticia.resumen }}</div>
-            {% endif %}
-            <div class="article-content">
-                {% if noticia.desarrollo %}
-                    {% for p in noticia.desarrollo.split('\n\n') %}
-                        {% if p.strip() %}<p>{{ p.strip() }}</p>{% endif %}
-                    {% endfor %}
-                {% endif %}
-            </div>
+    <!-- Desarrollo de la nota (Ancho limitado a 720px para lectura óptima) -->
+    <div class="article-body-container">
+        <div class="article-content">
+            <!-- Se asume que el desarrollo viene con saltos de línea o HTML desde el admin -->
+            {{ noticia.desarrollo | safe }}
         </div>
+    </div>
 
-        <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border-light);">
-            <h3 style="margin-bottom: 16px;"><i class="fas fa-share-alt" style="color: var(--blue-accent);"></i> Comparte</h3>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <a href="https://wa.me/?text={{ noticia.titulo | urlencode }}%20{{ request.url | urlencode }}" target="_blank" style="background: #25D366; color: white; padding: 10px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: 600;"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url | urlencode }}" target="_blank" style="background: #1877F2; color: white; padding: 10px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: 600;"><i class="fab fa-facebook-f"></i> Facebook</a>
-                <a href="https://twitter.com/intent/tweet?text={{ noticia.titulo | urlencode }}&url={{ request.url | urlencode }}" target="_blank" style="background: #1DA1F2; color: white; padding: 10px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: 600;"><i class="fab fa-twitter"></i> Twitter</a>
-            </div>
-        </div>
+    <!-- Botón Volver -->
+    <div class="back-link-container">
+        <a href="javascript:history.back()" class="back-link">
+            <i class="fas fa-arrow-left"></i> Volver a las noticias
+        </a>
+    </div>
 
-        {% if relacionadas %}
-        <div style="margin-top: 48px;">
-            <h3 style="margin-bottom: 20px;"><i class="fas fa-bookmark" style="color: var(--blue-accent);"></i> Relacionadas</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
-                {% for rel in relacionadas %}
-                <a href="/noticia/{{ rel.id }}" style="background: var(--bg-card); border-radius: var(--radius-md); padding: 16px; border: 1px solid var(--border-light); text-decoration: none; color: inherit; transition: 0.3s;" onmouseover="this.style.borderColor='var(--blue-accent)'" onmouseout="this.style.borderColor='var(--border-light)'">
-                    {% if rel.imagen %}<img src="{{ rel.imagen }}" style="width: 100%; height: 120px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 12px;">{% endif %}
-                    <h4 style="font-size: 1rem; margin: 0; color: var(--text-primary);">{{ rel.titulo }}</h4>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+</article>
+{% endblock %}
 
-        <div style="margin-top: 40px; display: flex; gap: 12px; flex-wrap: wrap;">
-            <a href="/seccion/{{ noticia.seccion }}" class="back-link"><i class="fas fa-arrow-left"></i> Volver a {{ noticia.seccion|replace('-', ' ')|title }}</a>
-            <a href="/" class="back-link" style="background: transparent; border: 1px solid var(--border-light);"><i class="fas fa-home"></i> Inicio</a>
-        </div>
-    </article>
-</main>
+<!-- Botón WhatsApp Flotante (inyectado en el body) -->
+{% block whatsapp_button %}
+<a href="https://wa.me/?text={{ '¡Mira esta nota de Sexto Poder Bolivia! ' + noticia.titulo + ' ' + request.url | urlencode }}" 
+   target="_blank" 
+   rel="noopener noreferrer" 
+   class="whatsapp-float" 
+   aria-label="Compartir en WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+</a>
+
+<!-- Reproductor de Audio Flotante (Web Speech API) -->
+<div class="audio-player-float" id="audioPlayer">
+    <button id="audioPlayPause" aria-label="Reproducir o pausar">
+        <i class="fas fa-play"></i>
+    </button>
+    <button id="audioStop" aria-label="Detener" style="background: var(--red-news);">
+        <i class="fas fa-stop"></i>
+    </button>
+    <div class="audio-info">
+        <div>Escuchando nota...</div>
+    </div>
+    <select class="audio-speed" id="audioSpeed" aria-label="Velocidad de reproducción">
+        <option value="1">1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Función para Lightbox de imágenes
+function openLightbox(img) {
+    const lightbox = document.createElement('div');
+    lightbox.className = 'lightbox active';
+    lightbox.innerHTML = `<img src="${img.src}" alt="Imagen ampliada">`;
+    lightbox.onclick = () => lightbox.remove();
+    document.body.appendChild(lightbox);
+}
+
+// Funcionalidad de Audio (Web Speech API)
+document.addEventListener('DOMContentLoaded', () => {
+    const articleContent = document.querySelector('.article-content');
+    if (!articleContent) return;
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playPauseBtn = document.getElementById('audioPlayPause');
+    const stopBtn = document.getElementById('audioStop');
+    const speedSelect = document.getElementById('audioSpeed');
+    
+    let speech = new SpeechSynthesisUtterance();
+    let isPlaying = false;
+
+    // Mostrar el reproductor si hay contenido
+    if (articleContent.innerText.trim().length > 50) {
+        audioPlayer.classList.add('active');
+        speech.text = articleContent.innerText;
+        speech.lang = 'es-ES';
+        speech.rate = 1;
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            window.speechSynthesis.pause();
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            isPlaying = false;
+        } else {
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            } else {
+                window.speechSynthesis.speak(speech);
+            }
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            isPlaying = true;
+        }
+    });
+
+    stopBtn.addEventListener('click', () => {
+        window.speechSynthesis.cancel();
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        isPlaying = false;
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+        speech.rate = parseFloat(e.target.value);
+        if (isPlaying) {
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(speech);
+        }
+    });
+
+    speech.onend = () => {
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        isPlaying = false;
+    };
+});
+</script>
 {% endblock %}
