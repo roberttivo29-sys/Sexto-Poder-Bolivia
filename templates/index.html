@@ -24,10 +24,10 @@
     </div>
     {% endif %}
 
-    <!-- Layout Principal: 2 columnas equilibradas -->
+    <!-- Layout Principal: 2 columnas (ORDEN ORIGINAL PARA DESKTOP) -->
     <div class="main-layout">
         
-        <!-- COLUMNA IZQUIERDA: Hero + Caricatura + Últimas -->
+        <!-- COLUMNA IZQUIERDA: Hero + Semana + Recomendadas -->
         <div class="column-left">
             
             <!-- 1. Hero Principal -->
@@ -48,57 +48,7 @@
             </a>
             {% endif %}
 
-            <!-- 2. Caricatura del Día -->
-            {% if caricatura %}
-            <div class="widget cartoon-widget-compact">
-                <h3 class="widget-title">
-                    <i class="fas fa-paint-brush" style="color: var(--gold-accent);"></i> Caricatura
-                </h3>
-                <div class="cartoon-container-compact">
-                    <img src="{{ caricatura.valor or 'https://placehold.co/400x250/1e293b/FFF?text=Caricatura' }}" 
-                         alt="Caricatura del día" 
-                         loading="lazy" 
-                         onclick="openLightbox(this)">
-                </div>
-                {% if caricatura.texto %}
-                <p class="caricatura-caption-compact">{{ caricatura.texto }}</p>
-                {% endif %}
-            </div>
-            {% endif %}
-
-            <!-- 3. Últimas Noticias -->
-            {% if ultimas_noticias %}
-            <div class="widget">
-                <h3 class="widget-title">
-                    <i class="fas fa-clock" style="color: var(--blue-accent);"></i> Últimas Noticias
-                </h3>
-                <div class="ultimas-list">
-                    {% for nota in ultimas_noticias %}
-                    <a href="/noticia/{{ nota.id }}" class="ultima-item">
-                        {% if nota.imagen %}
-                        <div class="ultima-item-image">
-                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
-                        </div>
-                        {% endif %}
-                        <div class="ultima-item-content">
-                            <span class="ultima-item-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
-                            <h4>{{ nota.titulo[:60] }}{% if nota.titulo|length > 60 %}...{% endif %}</h4>
-                            <span class="ultima-item-date">
-                                <i class="far fa-clock"></i> {{ nota.fecha }}
-                            </span>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-        </div>
-
-        <!-- COLUMNA DERECHA: Semana + Recomendadas + Redes -->
-        <aside class="sidebar">
-            
-            <!-- 4. Noticia de la Semana (Extendida) -->
+            <!-- 2. Noticia de la Semana (Extendida) -->
             {% if noticia_semana %}
             <a href="/noticia-semana" class="noticia-semana-widget">
                 <div class="noticia-semana-header">
@@ -121,7 +71,7 @@
             </a>
             {% endif %}
 
-            <!-- 5. También te puede interesar -->
+            <!-- 3. También te puede interesar -->
             {% if recomendadas %}
             <div class="recomendadas-widget">
                 <div class="recomendadas-header">
@@ -148,8 +98,58 @@
             </div>
             {% endif %}
 
-            <!-- 6. Síguenos (SOLO FACEBOOK Y TIKTOK) -->
-            <div class="widget">
+        </div>
+
+        <!-- COLUMNA DERECHA (SIDEBAR): Últimas + Caricatura + Redes -->
+        <aside class="sidebar">
+            
+            <!-- 4. Últimas Noticias -->
+            {% if ultimas_noticias %}
+            <div class="widget widget-ultimas">
+                <h3 class="widget-title">
+                    <i class="fas fa-clock" style="color: var(--blue-accent);"></i> Últimas Noticias
+                </h3>
+                <div class="ultimas-list">
+                    {% for nota in ultimas_noticias %}
+                    <a href="/noticia/{{ nota.id }}" class="ultima-item">
+                        {% if nota.imagen %}
+                        <div class="ultima-item-image">
+                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="ultima-item-content">
+                            <span class="ultima-item-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
+                            <h4>{{ nota.titulo[:60] }}{% if nota.titulo|length > 60 %}...{% endif %}</h4>
+                            <span class="ultima-item-date">
+                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                            </span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 5. Caricatura del Día -->
+            {% if caricatura %}
+            <div class="widget cartoon-widget-compact widget-caricatura">
+                <h3 class="widget-title">
+                    <i class="fas fa-paint-brush" style="color: var(--gold-accent);"></i> Caricatura
+                </h3>
+                <div class="cartoon-container-compact">
+                    <img src="{{ caricatura.valor or 'https://placehold.co/400x250/1e293b/FFF?text=Caricatura' }}" 
+                         alt="Caricatura del día" 
+                         loading="lazy" 
+                         onclick="openLightbox(this)">
+                </div>
+                {% if caricatura.texto %}
+                <p class="caricatura-caption-compact">{{ caricatura.texto }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- 6. Síguenos -->
+            <div class="widget widget-redes">
                 <h3 class="widget-title">
                     <i class="fas fa-share-nodes" style="color: var(--blue-accent);"></i> Síguenos
                 </h3>
