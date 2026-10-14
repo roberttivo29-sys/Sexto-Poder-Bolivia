@@ -89,7 +89,7 @@
                             <span class="recomendada-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
                             <h4>{{ nota.titulo }}</h4>
                             <span class="recomendada-date">
-                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                                {{ nota.fecha }}
                             </span>
                         </div>
                     </a>
@@ -103,7 +103,7 @@
         <!-- COLUMNA DERECHA (SIDEBAR): Últimas + Caricatura + Redes -->
         <aside class="sidebar">
             
-            <!-- 4. Últimas Noticias (SOLO TEXTO EN DESKTOP) -->
+            <!-- 4. Últimas Noticias (COMPACTO - SIN RELOJ) -->
             {% if ultimas_noticias %}
             <div class="widget widget-ultimas">
                 <h3 class="widget-title">
@@ -112,16 +112,11 @@
                 <div class="ultimas-list">
                     {% for nota in ultimas_noticias %}
                     <a href="/noticia/{{ nota.id }}" class="ultima-item">
-                        {% if nota.imagen %}
-                        <div class="ultima-item-image">
-                            <img src="{{ nota.imagen }}" alt="{{ nota.titulo }}" loading="lazy">
-                        </div>
-                        {% endif %}
                         <div class="ultima-item-content">
                             <span class="ultima-item-badge">{{ nota.seccion|replace('-', ' ')|title }}</span>
                             <h4>{{ nota.titulo }}</h4>
                             <span class="ultima-item-date">
-                                <i class="far fa-clock"></i> {{ nota.fecha }}
+                                {{ nota.fecha }}
                             </span>
                         </div>
                     </a>

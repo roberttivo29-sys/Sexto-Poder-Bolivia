@@ -7,6 +7,7 @@
     <meta name="description" content="{% block description %}Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.{% endblock %}">
     <meta name="theme-color" content="#0a1628">
     
+    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sexto Poder">
@@ -36,7 +37,7 @@
                     </div>
                     <div class="logo-text">
                         <h1 class="logo-title">
-                            <span class="logo-sexto">SEXTO</span><span class="logo-poder">PODER</span>
+                            <span class="logo-sexto">SEXTO </span><span class="logo-poder">PODER</span>
                         </h1>
                         <span class="logo-tagline">BOLIVIA</span>
                     </div>
@@ -48,6 +49,7 @@
                         <time id="current-date">{{ now.strftime('%A, %d de %B de %Y') if now else 'Martes, 13 de octubre de 2026' }}</time>
                     </div>
                     
+                    <!-- Toggle Modo Oscuro/Claro -->
                     <button class="theme-toggle" id="themeToggle" aria-label="Cambiar modo oscuro/claro">
                         <i class="fas fa-moon" id="themeIcon"></i>
                     </button>
@@ -71,27 +73,15 @@
         </div>
     </header>
 
-    <nav class="bottom-nav" aria-label="Navegación inferior móvil">
-        <a href="/" class="bottom-nav-item {% if request.path == '/' %}active{% endif %}">
-            <i class="fas fa-home"></i>
-            <span>Inicio</span>
-        </a>
-        <a href="/seccion/locales" class="bottom-nav-item">
-            <i class="fas fa-folder-open"></i>
-            <span>Secciones</span>
-        </a>
-        <button class="bottom-nav-item" id="bottomSearchBtn" aria-label="Buscar">
-            <i class="fas fa-search"></i>
-            <span>Buscar</span>
-        </button>
-    </nav>
-
+    <!-- MAIN CONTENT - SIN BOTTOM NAV -->
     <main role="main" id="main-content" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Botón WhatsApp Flotante (se inyecta solo en detalle.html) -->
     {% block whatsapp_button %}{% endblock %}
 
+    <!-- FOOTER -->
     <footer class="footer" role="contentinfo">
         <div class="container">
             <div class="footer-content">
@@ -99,7 +89,7 @@
                     <div class="footer-logo">
                         <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder" class="footer-logo-img" width="44" height="44">
                         <h3 class="footer-logo-title">
-                            <span class="logo-sexto">SEXTO</span><span class="logo-poder">PODER</span>
+                            <span class="logo-sexto">SEXTO </span><span class="logo-poder">PODER</span>
                         </h3>
                     </div>
                     <p>Periodismo independiente sin filtros. La verdad sin censura. Comprometidos con la información veraz y el análisis profundo de la realidad boliviana.</p>
@@ -139,6 +129,7 @@
         </div>
     </footer>
 
+    <!-- Botón Volver Arriba -->
     <button class="back-to-top" id="backToTop" aria-label="Volver al inicio de la página">
         <i class="fas fa-arrow-up" aria-hidden="true"></i>
     </button>
