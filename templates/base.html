@@ -7,7 +7,6 @@
     <meta name="description" content="{% block description %}Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.{% endblock %}">
     <meta name="theme-color" content="#0a1628">
     
-    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sexto Poder">
@@ -18,7 +17,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=Source+Serif+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=Source+Serif+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -33,11 +32,11 @@
             <div class="header-top">
                 <a href="/" class="logo" aria-label="Ir a la página de inicio">
                     <div class="logo-image-wrapper">
-                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder Bolivia" class="logo-image" width="60" height="60">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder Bolivia" class="logo-image" width="56" height="56">
                     </div>
                     <div class="logo-text">
                         <h1 class="logo-title">
-                            <span class="logo-sexto">SEXTO </span><span class="logo-poder">PODER</span>
+                            <span class="logo-sexto">SEXTO</span><span class="logo-poder">PODER</span>
                         </h1>
                         <span class="logo-tagline">BOLIVIA</span>
                     </div>
@@ -46,10 +45,9 @@
                 <div class="header-controls">
                     <div class="header-date">
                         <i class="far fa-calendar-alt" aria-hidden="true"></i>
-                        <time id="current-date">{{ now.strftime('%A, %d de %B de %Y') if now else 'Viernes, 9 de octubre de 2026' }}</time>
+                        <time id="current-date">{{ now.strftime('%A, %d de %B de %Y') if now else 'Martes, 13 de octubre de 2026' }}</time>
                     </div>
                     
-                    <!-- Toggle Modo Oscuro/Claro -->
                     <button class="theme-toggle" id="themeToggle" aria-label="Cambiar modo oscuro/claro">
                         <i class="fas fa-moon" id="themeIcon"></i>
                     </button>
@@ -73,7 +71,6 @@
         </div>
     </header>
 
-    <!-- Bottom Navigation (solo móvil) -->
     <nav class="bottom-nav" aria-label="Navegación inferior móvil">
         <a href="/" class="bottom-nav-item {% if request.path == '/' %}active{% endif %}">
             <i class="fas fa-home"></i>
@@ -93,7 +90,6 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Botón WhatsApp Flotante (solo en detalle.html) -->
     {% block whatsapp_button %}{% endblock %}
 
     <footer class="footer" role="contentinfo">
@@ -101,9 +97,9 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <div class="footer-logo">
-                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder" class="footer-logo-img" width="48" height="48">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder" class="footer-logo-img" width="44" height="44">
                         <h3 class="footer-logo-title">
-                            <span class="logo-sexto">SEXTO </span><span class="logo-poder">PODER</span>
+                            <span class="logo-sexto">SEXTO</span><span class="logo-poder">PODER</span>
                         </h3>
                     </div>
                     <p>Periodismo independiente sin filtros. La verdad sin censura. Comprometidos con la información veraz y el análisis profundo de la realidad boliviana.</p>
