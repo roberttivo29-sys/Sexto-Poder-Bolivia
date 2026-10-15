@@ -166,7 +166,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         </div>
         <div class="admin-actions">
             <a href="/" target="_blank" class="btn btn-brand"><i class="fas fa-external-link-alt"></i> Ver Web</a>
-            <a href="/admin/radio" class="btn btn-green"><i class="fas fa-broadcast-tower"></i> Radio en Vivo</a>
             <a href="/admin/logout" class="btn btn-red"><i class="fas fa-sign-out-alt"></i> Salir</a>
         </div>
     </div>
@@ -185,6 +184,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         <button class="tab active" data-tab="noticias"><i class="fas fa-newspaper"></i> Noticias</button>
         <button class="tab" data-tab="nueva"><i class="fas fa-plus"></i> <span id="tabNuevaLabel">Nueva</span></button>
         <button class="tab" data-tab="caricatura"><i class="fas fa-paint-brush"></i> Caricatura</button>
+        <!-- AGREGADO: Pestaña Radio en Vivo -->
+        <button class="tab" data-tab="radio"><i class="fas fa-broadcast-tower"></i> Radio en Vivo</button>
     </div>
     
     <div class="tab-content active" id="tab-noticias">
@@ -278,9 +279,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             <div class="form-group">
                 <label>Flags de Portada</label>
                 <div class="flags-group">
-                    <label class="flag-checkbox"><input type="checkbox" name="es_hero" id="flagHero" value="1"> 👑 Hero Principal</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" id="flagTicker" value="1"> 📢 Ticker</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" id="flagPopular" value="1">  Popular</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_hero" id="flagHero" value="1">  Hero Principal</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_ticker" id="flagTicker" value="1">  Ticker</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" id="flagPopular" value="1"> 🔥 Popular</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" id="flagSemana" value="1"> ⭐ Noticia Semana</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" id="flagRecomendada" value="1"> 💡 Recomendar</label>
                 </div>
@@ -321,6 +322,51 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             </button>
         </form>
     </div>
+
+    <!-- AGREGADO: Pestaña Radio en Vivo -->
+    <div class="tab-content" id="tab-radio">
+        <div class="form-section">
+            <h2><i class="fas fa-broadcast-tower" style="color: var(--red-news);"></i> Control de Sexto Poder Radio</h2>
+            
+            <div id="radioStatusBox" style="text-align:center; padding:20px; background:var(--bg-secondary); border-radius:var(--radius-md); margin-bottom:20px; border:2px solid var(--border-light);">
+                <div style="font-size:3rem; margin-bottom:8px;" id="radioStatusIcon">⚫</div>
+                <div style="font-size:1.3rem; font-weight:800; color:var(--text-muted);" id="radioStatusText">FUERA DEL AIRE</div>
+            </div>
+
+            <button id="btnToggleRadio" class="btn btn-red" style="width:100%; padding:14px; font-size:1rem; justify-content:center; margin-bottom:20px;">
+                <i class="fas fa-broadcast-tower"></i> <span id="btnToggleText">SALIR AL AIRE</span>
+            </button>
+
+            <div style="border-top:1px solid var(--border-light); padding-top:20px;">
+                <div class="form-group">
+                    <label>Nombre del Programa:</label>
+                    <input type="text" id="radioProgramName" value="Sexto Poder Radio">
+                </div>
+                <div class="form-group">
+                    <label>Descripción:</label>
+                    <textarea id="radioDescription" rows="2">Transmisión en vivo de Sexto Poder Bolivia</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Stream URL (Caster.fm):</label>
+                    <input type="text" id="radioStreamUrl" value="https://sapircast.caster.fm:19246/lqiXc" style="font-family:monospace;">
+                </div>
+                <button id="btnSaveRadio" class="btn btn-green" style="width:100%; padding:12px; justify-content:center;">
+                    <i class="fas fa-save"></i> Guardar Configuración
+                </button>
+            </div>
+
+            <div style="margin-top:24px; padding:16px; background:var(--bg-secondary); border-radius:var(--radius-md); border-left:4px solid var(--brand-primary);">
+                <h4 style="margin-bottom:10px; color:var(--brand-primary);"><i class="fas fa-info-circle"></i> Cómo salir al aire</h4>
+                <ol style="color:var(--text-secondary); padding-left:20px; line-height:1.7; font-size:0.9rem;">
+                    <li>Abre <strong>Virtual DJ</strong> en tu PC</li>
+                    <li>Configura el <strong>Broadcast</strong> con los datos de Caster.fm</li>
+                    <li>Presiona <strong>BROADCAST</strong> en Virtual DJ</li>
+                    <li>Vuelve aquí y haz clic en <strong>"SALIR AL AIRE"</strong></li>
+                    <li>¡Listo! Aparecerá el botón 🔴 en tu web</li>
+                </ol>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -332,7 +378,7 @@ function safeSetText(id, text) {
     if (el) {
         el.textContent = text;
     } else {
-        console.warn(`⚠️ Elemento #${id} no encontrado`);
+        console.warn(`️ Elemento #${id} no encontrado`);
     }
 }
 
@@ -341,7 +387,7 @@ function safeSetHTML(id, html) {
     if (el) {
         el.innerHTML = html;
     } else {
-        console.warn(`️ Elemento #${id} no encontrado`);
+        console.warn(`⚠️ Elemento #${id} no encontrado`);
     }
 }
 
@@ -495,8 +541,8 @@ async function cargarNoticias() {
                     <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
                     <td>
                         ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
-                        ${n.es_ticker ? '<span class="badge badge-ticker"></span>' : ''}
-                        ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
+                        ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
+                        ${n.es_popular ? '<span class="badge badge-popular"></span>' : ''}
                         ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
                         ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
                     </td>
@@ -626,7 +672,7 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
     
     const formData = new FormData(e.target);
     
-    console.log(' Enviando formulario...');
+    console.log('📤 Enviando formulario...');
     for (let pair of formData.entries()) {
         if (pair[1] instanceof File && pair[1].size > 0) {
             console.log(`📁 ${pair[0]}: ${pair[1].name} (${(pair[1].size / 1024 / 1024).toFixed(2)} MB)`);
@@ -636,7 +682,7 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
     }
     
     try {
-        console.log('⏳ Esperando respuesta del servidor...');
+        console.log(' Esperando respuesta del servidor...');
         
         const res = await fetch('/api/admin/noticias', { 
             method: 'POST', 
@@ -676,20 +722,20 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
             showToast(`❌ ${data.error || 'Error al guardar'}`, 'error');
         }
     } catch(err) {
-        console.error('❌ Error completo:', err);
+        console.error(' Error completo:', err);
         console.error('Stack:', err.stack);
         
         if (err.name === 'AbortError') {
             showToast('⚠️ La petición tardó demasiado. La noticia pudo haberse guardado. Recarga la página (F5) para verificar.', 'error');
         } else if (err.message.includes('JSON')) {
-            showToast('⚠️ Error en la respuesta del servidor. La noticia pudo haberse guardado. Recarga la página (F5) para verificar.', 'error');
+            showToast('️ Error en la respuesta del servidor. La noticia pudo haberse guardado. Recarga la página (F5) para verificar.', 'error');
         } else {
             showToast(`❌ Error de conexión: ${err.message}`, 'error');
         }
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
-        console.log('🏁 Proceso finalizado');
+        console.log(' Proceso finalizado');
     }
 });
 
@@ -751,6 +797,86 @@ async function cargarCaricatura() {
         console.error('Error al cargar caricatura:', err);
     }
 }
+
+// ==========================================
+// AGREGADO: CONTROL DE RADIO EN VIVO (Dentro del Admin)
+// ==========================================
+async function cargarEstadoRadio() {
+    try {
+        const res = await fetch('/api/radio/status');
+        const data = await res.json();
+        
+        const statusIcon = document.getElementById('radioStatusIcon');
+        const statusText = document.getElementById('radioStatusText');
+        const btnToggle = document.getElementById('btnToggleRadio');
+        const btnToggleText = document.getElementById('btnToggleText');
+        const statusBox = document.getElementById('radioStatusBox');
+        
+        if (data.is_live) {
+            statusIcon.textContent = '🔴';
+            statusText.textContent = 'EN VIVO';
+            statusText.style.color = 'var(--red-news)';
+            statusBox.style.borderColor = 'var(--red-news)';
+            btnToggleText.textContent = 'DETENER TRANSMISIÓN';
+            btnToggle.className = 'btn btn-orange';
+        } else {
+            statusIcon.textContent = '⚫';
+            statusText.textContent = 'FUERA DEL AIRE';
+            statusText.style.color = 'var(--text-muted)';
+            statusBox.style.borderColor = 'var(--border-light)';
+            btnToggleText.textContent = 'SALIR AL AIRE';
+            btnToggle.className = 'btn btn-red';
+        }
+        
+        document.getElementById('radioProgramName').value = data.program_name || 'Sexto Poder Radio';
+        document.getElementById('radioDescription').value = data.description || '';
+        document.getElementById('radioStreamUrl').value = data.stream_url || '';
+    } catch(err) {
+        console.error('Error al cargar estado de radio:', err);
+    }
+}
+
+document.getElementById('btnToggleRadio').addEventListener('click', async () => {
+    try {
+        const res = await fetch('/admin/radio', {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            body: new URLSearchParams({action: 'toggle'})
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(data.is_live ? '🔴 ¡En vivo!' : '⚫ Transmisión detenida', 'success');
+            cargarEstadoRadio();
+        }
+    } catch(err) {
+        showToast('Error al cambiar estado', 'error');
+    }
+});
+
+document.getElementById('btnSaveRadio').addEventListener('click', async () => {
+    try {
+        const formData = new URLSearchParams({
+            action: 'save',
+            program_name: document.getElementById('radioProgramName').value,
+            description: document.getElementById('radioDescription').value,
+            stream_url: document.getElementById('radioStreamUrl').value
+        });
+        const res = await fetch('/admin/radio', {
+            method: 'POST',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('✅ Configuración de radio guardada', 'success');
+        }
+    } catch(err) {
+        showToast('Error al guardar', 'error');
+    }
+});
+
+// Cargar estado de radio al iniciar
+cargarEstadoRadio();
 
 cargarNoticias();
 cargarCaricatura();

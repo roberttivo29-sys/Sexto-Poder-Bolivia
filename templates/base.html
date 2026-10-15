@@ -44,12 +44,12 @@
                 </a>
                 
                 <div class="header-controls">
-                    <!-- AGREGADO: Botón Radio En Vivo -->
+                    <!-- AGREGADO: Botón Radio En Vivo (siempre visible, compacto) -->
                     <button class="radio-live-btn is-offline" id="radioLiveBtn" aria-label="Radio Sexto Poder">
                         <span class="live-dot"></span>
                         <span class="btn-text">Radio</span>
                     </button>
-
+                    
                     <div class="header-date">
                         <i class="far fa-calendar-alt" aria-hidden="true"></i>
                         <time id="current-date">{{ now.strftime('%A, %d de %B de %Y') if now else 'Martes, 13 de octubre de 2026' }}</time>
@@ -125,8 +125,6 @@
                     <ul>
                         <li><a href="mailto:sextopoderbolivia@gmail.com"><i class="fas fa-envelope" aria-hidden="true"></i> sextopoderbolivia@gmail.com</a></li>
                         <li><a href="/admin"><i class="fas fa-user-shield" aria-hidden="true"></i> Panel de Administración</a></li>
-                        <!-- AGREGADO: Enlace a Radio -->
-                        <li><a href="/admin/radio"><i class="fas fa-broadcast-tower" aria-hidden="true"></i> Control de Radio</a></li>
                     </ul>
                 </div>
             </div>
@@ -142,14 +140,14 @@
         <i class="fas fa-arrow-up" aria-hidden="true"></i>
     </button>
     
-    <!-- AGREGADO: Reproductor de Radio - Siempre Visible -->
+    <!-- AGREGADO: Reproductor de Radio Flotante COMPACTO -->
     <div class="radio-player-float is-offline" id="radioPlayerFloat">
         <div class="radio-player-header">
             <div class="status-text offline" id="radioStatusText">
                 <span class="live-dot"></span>
                 <span id="radioProgramName">Sexto Poder Radio</span>
             </div>
-            <button id="minimizeRadio" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem;" aria-label="Minimizar reproductor">
+            <button id="minimizeRadio" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem;" aria-label="Minimizar reproductor">
                 <i class="fas fa-minus"></i>
             </button>
         </div>

@@ -36,7 +36,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'sexto-poder-2026-clave-secreta-ro
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 app.config['NOTICIAS_POR_PAGINA'] = 6
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -100,7 +100,7 @@ class Configuracion(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # ==========================================
-# AGREGADO: MODELO PARA RADIO EN VIVO
+# MODELO PARA RADIO EN VIVO
 # ==========================================
 class RadioConfig(db.Model):
     __tablename__ = 'radio_config'
@@ -316,7 +316,7 @@ def api_config():
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 # ==========================================
-# AGREGADO: RUTAS PARA RADIO EN VIVO
+# RUTAS PARA RADIO EN VIVO
 # ==========================================
 @app.route('/admin/radio', methods=['GET', 'POST'])
 @login_required
@@ -535,7 +535,7 @@ def init_db():
                 cursor.execute(f"ALTER TABLE noticias ADD COLUMN {col} BOOLEAN DEFAULT {default};")
                 conn.commit()
             except sqlite3.OperationalError:
-                pass # La columna ya existe
+                pass
         conn.close()
         
         if not Configuracion.query.filter_by(clave='caricatura').first():
@@ -543,7 +543,6 @@ def init_db():
             db.session.add(config)
             db.session.commit()
             
-        # AGREGADO: Inicializar config de radio si no existe
         if not RadioConfig.query.first():
             default_radio = RadioConfig(
                 is_live=False,
