@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SEXTO PODER BOLIVIA - Backend Flask v5.9
-Incluye: Hero, Ticker, Últimas, Semana (Transversal), Recomendadas
-Migración automática + Gestión exclusiva de Noticia de la Semana + EDICIÓN
-Manejo robusto de errores y logging mejorado
+SEXTO PODER BOLIVIA - Backend Flask v6.0
+Incluye: Hero, Ticker, Últimas, Semana, Recomendadas, Búsqueda, Audio, Auto-archivado y RADIO EN VIVO
 """
 
 import os
 import time
 import logging
 import traceback
+import json
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -98,6 +97,19 @@ class Configuracion(db.Model):
     clave = db.Column(db.String(50), unique=True, nullable=False, index=True)
     valor = db.Column(db.Text, nullable=True)
     texto = db.Column(db.Text, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# ==========================================
+# AGREGADO: MODELO PARA RADIO EN VIVO
+# ==========================================
+class RadioConfig(db.Model):
+    __tablename__ = 'radio_config'
+    id = db.Column(db.Integer, primary_key=True)
+    is_live = db.Column(db.Boolean, default=False)
+    program_name = db.Column(db.String(100), default='Sexto Poder Radio')
+    stream_url = db.Column(db.String(500), default='https://sapircast.caster.fm:19246/lqiXc')
+    description = db.Column(db.String(300), default='Transmisión en vivo de Sexto Poder Bolivia')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def allowed_file(filename, allowed_extensions):
@@ -226,6 +238,60 @@ def seccion(seccion):
         logger.error(f"Error en ruta /seccion/{seccion}: {e}")
         return render_template('seccion.html', seccion=seccion, noticias=[], pagination=None)
 
+@app.route('/api/buscar')
+def api_buscar():
+    try:
+        q = request.args.get('q', '').strip().lower()
+        if not q or len(q) < 3:
+            return jsonify([])
+        noticias = Noticia.query.filter(
+            Noticia.estado == 'activo',
+            db.or_(
+                Noticia.titulo.ilike(f'%{q}%'),
+                Noticia.resumen.ilike(f'%{q}%'),
+                Noticia.desarrollo.ilike(f'%{q}%')
+            )
+        ).order_by(Noticia.created_at.desc()).limit(20).all()
+        return jsonify([n.to_dict() for n in noticias])
+    except Exception as e:
+        logger.error(f"Error en API /api/buscar: {e}")
+        return jsonify({'error': 'Error interno'}), 500
+
+@app.route('/api/noticia/<int:noticia_id>/texto')
+def api_noticia_texto(noticia_id):
+    try:
+        noticia = Noticia.query.get_or_404(noticia_id)
+        texto_limpio = f"{noticia.titulo}. {noticia.resumen or ''}. {noticia.desarrollo or ''}"
+        return jsonify({'texto': texto_limpio})
+    except Exception as e:
+        logger.error(f"Error en API /api/noticia/{noticia_id}/texto: {e}")
+        return jsonify({'error': 'Error interno'}), 500
+
+@app.route('/api/admin/archivar', methods=['POST'])
+@login_required
+def admin_trigger_archivar():
+    try:
+        ahora = datetime.utcnow()
+        archivadas = 0
+        TIEMPOS = {'locales': 48, 'internacionales': 48, 'ciencia': 240, 'espiritualidad': 240, 'medicina-tradicional': 240}
+        
+        for n in Noticia.query.filter_by(estado='activo').all():
+            if n.es_noticia_semana: 
+                continue
+            horas_max = TIEMPOS.get((n.seccion or '').lower(), 240)
+            if n.created_at and (ahora - n.created_at).total_seconds() / 3600 > horas_max:
+                n.estado = 'archivado'
+                archivadas += 1
+                
+        if archivadas > 0:
+            db.session.commit()
+            
+        return jsonify({'success': True, 'archivadas': archivadas})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error al archivar manualmente: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/noticias')
 def api_noticias():
     try:
@@ -248,6 +314,50 @@ def api_config():
     except Exception as e:
         logger.error(f"Error en API /api/config: {e}")
         return jsonify({'error': 'Error interno del servidor'}), 500
+
+# ==========================================
+# AGREGADO: RUTAS PARA RADIO EN VIVO
+# ==========================================
+@app.route('/admin/radio', methods=['GET', 'POST'])
+@login_required
+def admin_radio():
+    config = RadioConfig.query.first()
+    if not config:
+        config = RadioConfig()
+        db.session.add(config)
+        db.session.commit()
+    
+    if request.method == 'POST':
+        action = request.form.get('action', 'save')
+        if action == 'toggle':
+            config.is_live = not config.is_live
+        else:
+            config.is_live = request.form.get('is_live') == 'on'
+            config.program_name = request.form.get('program_name', 'Sexto Poder Radio')
+            config.stream_url = request.form.get('stream_url', config.stream_url)
+            config.description = request.form.get('description', config.description)
+        
+        config.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'is_live': config.is_live, 'program_name': config.program_name})
+        
+        return redirect(url_for('admin_radio'))
+    
+    return render_template('admin_radio.html', config=config)
+
+@app.route('/api/radio/status')
+def api_radio_status():
+    config = RadioConfig.query.first()
+    if config:
+        return jsonify({
+            'is_live': config.is_live,
+            'program_name': config.program_name,
+            'stream_url': config.stream_url,
+            'description': config.description
+        })
+    return jsonify({'is_live': False})
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -296,54 +406,37 @@ def admin_list_noticias():
 def admin_create_noticia():
     try:
         logger.info(f" Recibiendo petición para crear/editar noticia")
-        logger.info(f"Method: {request.method}")
-        logger.info(f"Content-Type: {request.content_type}")
-        
         data = request.form
         titulo = data.get('titulo', '').strip()
         seccion = data.get('seccion', '').strip()
         es_semana = parse_bool(data.get('es_noticia_semana'))
         noticia_id = data.get('noticia_id', '').strip()
 
-        logger.info(f"Título: {titulo[:50]}...")
-        logger.info(f"Sección: {seccion}")
-        logger.info(f"Es Semana: {es_semana}")
-        logger.info(f"ID Noticia: {noticia_id if noticia_id else 'Nueva'}")
-
         if not titulo:
-            logger.error("❌ Error: Título vacío")
             return jsonify({'error': 'El título es obligatorio'}), 400
 
         if not es_semana and not seccion:
-            logger.error("❌ Error: Sección vacía y no es noticia de semana")
             return jsonify({'error': 'La sección es obligatoria (excepto para Noticia de la Semana)'}), 400
 
         if es_semana and not seccion:
             seccion = 'semana'
-            logger.info("✅ Sección asignada automáticamente: 'semana'")
 
-        # Si se marca como Noticia de la Semana, DESMARCAMOS todas las demás
         if es_semana:
             Noticia.query.filter_by(es_noticia_semana=True).update({Noticia.es_noticia_semana: False})
             db.session.commit()
-            logger.info("✅ Desmarcadas todas las noticias de la semana anteriores")
 
         imagen_url = guardar_archivo(request.files.get('imagen'), 'imagen') if request.files.get('imagen') else None
         video_url = guardar_archivo(request.files.get('video_corto'), 'video') if request.files.get('video_corto') else None
 
-        # MODO EDICIÓN
         if noticia_id:
-            logger.info(f"✏️ Modo EDICIÓN para noticia #{noticia_id}")
             noticia = Noticia.query.get_or_404(int(noticia_id))
             noticia.titulo = titulo
             noticia.resumen = data.get('resumen', '').strip()
             noticia.desarrollo = data.get('desarrollo', '').strip()
             noticia.seccion = seccion
             noticia.categoria = data.get('categoria', '').strip() or None
-            if imagen_url:
-                noticia.imagen = imagen_url
-            if video_url:
-                noticia.video_corto = video_url
+            if imagen_url: noticia.imagen = imagen_url
+            if video_url: noticia.video_corto = video_url
             noticia.fecha = data.get('fecha', datetime.now().strftime("%d/%m/%Y"))
             noticia.es_hero = parse_bool(data.get('es_hero'))
             noticia.es_ticker = parse_bool(data.get('es_ticker'))
@@ -352,41 +445,27 @@ def admin_create_noticia():
             noticia.es_recomendada = parse_bool(data.get('es_recomendada'))
             noticia.updated_at = datetime.utcnow()
             db.session.commit()
-            logger.info(f"✅ Noticia #{noticia_id} actualizada correctamente")
             return jsonify({'success': True, 'id': noticia.id, 'action': 'update'}), 200
         else:
-            # MODO CREACIÓN
-            logger.info("➕ Modo CREACIÓN de nueva noticia")
             noticia = Noticia(
-                titulo=titulo,
-                resumen=data.get('resumen', '').strip(),
-                desarrollo=data.get('desarrollo', '').strip(),
-                seccion=seccion,
-                categoria=data.get('categoria', '').strip() or None,
-                imagen=imagen_url,
-                video_corto=video_url,
+                titulo=titulo, resumen=data.get('resumen', '').strip(), desarrollo=data.get('desarrollo', '').strip(),
+                seccion=seccion, categoria=data.get('categoria', '').strip() or None,
+                imagen=imagen_url, video_corto=video_url,
                 fecha=data.get('fecha', datetime.now().strftime("%d/%m/%Y")),
-                es_hero=parse_bool(data.get('es_hero')),
-                es_ticker=parse_bool(data.get('es_ticker')),
-                es_popular=parse_bool(data.get('es_popular')),
-                es_noticia_semana=es_semana,
-                es_recomendada=parse_bool(data.get('es_recomendada')),
-                estado='activo'
+                es_hero=parse_bool(data.get('es_hero')), es_ticker=parse_bool(data.get('es_ticker')),
+                es_popular=parse_bool(data.get('es_popular')), es_noticia_semana=es_semana,
+                es_recomendada=parse_bool(data.get('es_recomendada')), estado='activo'
             )
             db.session.add(noticia)
             db.session.commit()
-            logger.info(f"✅ Noticia #{noticia.id} creada correctamente")
             return jsonify({'success': True, 'id': noticia.id, 'action': 'create'}), 201
             
     except ValueError as ve:
         db.session.rollback()
-        logger.error(f"❌ Error de valor: {ve}")
-        logger.error(traceback.format_exc())
         return jsonify({'error': str(ve)}), 400
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ Error al guardar noticia: {e}")
-        logger.error(traceback.format_exc())
+        logger.error(f"Error al guardar noticia: {e}")
         return jsonify({'error': f'Error interno al guardar la noticia: {str(e)}'}), 500
 
 @app.route('/api/admin/noticias/<int:noticia_id>', methods=['GET'])
@@ -396,7 +475,6 @@ def admin_get_noticia(noticia_id):
         noticia = Noticia.query.get_or_404(noticia_id)
         return jsonify(noticia.to_dict(include_content=True)), 200
     except Exception as e:
-        logger.error(f"Error al obtener noticia {noticia_id}: {e}")
         return jsonify({'error': 'No se pudo cargar la noticia'}), 500
 
 @app.route('/api/admin/noticias/<int:noticia_id>', methods=['DELETE'])
@@ -409,7 +487,6 @@ def admin_delete_noticia(noticia_id):
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error al archivar noticia {noticia_id}: {e}")
         return jsonify({'error': 'No se pudo archivar la noticia'}), 500
 
 @app.route('/api/admin/config', methods=['POST'])
@@ -431,7 +508,6 @@ def admin_update_config():
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error al actualizar configuración {clave}: {e}")
         return jsonify({'error': 'Error al guardar la configuración'}), 500
 
 @app.errorhandler(404)
@@ -443,54 +519,49 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
-    logger.error(f"Error 500: {error}")
     if request.path.startswith('/api/'):
         return jsonify({'error': 'Error interno del servidor'}), 500
     return render_template('500.html'), 500
 
 def init_db():
-    """Inicializa la base de datos y agrega columnas faltantes si es necesario"""
     with app.app_context():
         db.create_all()
-        
         import sqlite3
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         
-        try:
-            cursor.execute("ALTER TABLE noticias ADD COLUMN es_noticia_semana BOOLEAN DEFAULT 0;")
-            conn.commit()
-            logger.info("✅ Columna 'es_noticia_semana' agregada")
-        except sqlite3.OperationalError as e:
-            if "duplicate column name" not in str(e).lower():
-                logger.error(f"Error al agregar es_noticia_semana: {e}")
-        
-        try:
-            cursor.execute("ALTER TABLE noticias ADD COLUMN es_recomendada BOOLEAN DEFAULT 0;")
-            conn.commit()
-            logger.info("✅ Columna 'es_recomendada' agregada")
-        except sqlite3.OperationalError as e:
-            if "duplicate column name" not in str(e).lower():
-                logger.error(f"Error al agregar es_recomendada: {e}")
-        
+        for col, default in [('es_noticia_semana', 0), ('es_recomendada', 0), ('modo_ultima_hora', 0)]:
+            try:
+                cursor.execute(f"ALTER TABLE noticias ADD COLUMN {col} BOOLEAN DEFAULT {default};")
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass # La columna ya existe
         conn.close()
         
         if not Configuracion.query.filter_by(clave='caricatura').first():
             config = Configuracion(clave='caricatura', valor='', texto='Caricatura del día')
             db.session.add(config)
             db.session.commit()
-            logger.info("✅ Configuración de caricatura creada")
+            
+        # AGREGADO: Inicializar config de radio si no existe
+        if not RadioConfig.query.first():
+            default_radio = RadioConfig(
+                is_live=False,
+                program_name='Sexto Poder Radio',
+                stream_url='https://sapircast.caster.fm:19246/lqiXc',
+                description='Transmisión en vivo de Sexto Poder Bolivia'
+            )
+            db.session.add(default_radio)
+            db.session.commit()
+            print("✅ Configuración de radio creada por defecto")
 
 if __name__ == '__main__':
     try:
         init_db()
         print("=" * 65)
-        print("   SEXTO PODER BOLIVIA - SERVIDOR INICIADO CORRECTAMENTE")
-        print("=" * 65)
-        print(f"   Web Local: http://127.0.0.1:5000")
-        print(f"   Admin:     http://127.0.0.1:5000/admin")
+        print("   SEXTO PODER BOLIVIA - SERVIDOR INICIADO (v6.0 + RADIO)")
         print("=" * 65)
         app.run(debug=True, host='0.0.0.0', port=5000)
     except Exception as e:
-        logger.critical(f"Error crítico al iniciar la aplicación: {e}")
+        logger.critical(f"Error crítico al iniciar: {e}")
         exit(1)

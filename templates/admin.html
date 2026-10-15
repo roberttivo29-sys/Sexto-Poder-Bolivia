@@ -166,6 +166,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         </div>
         <div class="admin-actions">
             <a href="/" target="_blank" class="btn btn-brand"><i class="fas fa-external-link-alt"></i> Ver Web</a>
+            <a href="/admin/radio" class="btn btn-green"><i class="fas fa-broadcast-tower"></i> Radio en Vivo</a>
             <a href="/admin/logout" class="btn btn-red"><i class="fas fa-sign-out-alt"></i> Salir</a>
         </div>
     </div>
@@ -279,9 +280,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 <div class="flags-group">
                     <label class="flag-checkbox"><input type="checkbox" name="es_hero" id="flagHero" value="1"> 👑 Hero Principal</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_ticker" id="flagTicker" value="1"> 📢 Ticker</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" id="flagPopular" value="1"> 🔥 Popular</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_popular" id="flagPopular" value="1">  Popular</label>
                     <label class="flag-checkbox"><input type="checkbox" name="es_noticia_semana" id="flagSemana" value="1"> ⭐ Noticia Semana</label>
-                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" id="flagRecomendada" value="1">  Recomendar</label>
+                    <label class="flag-checkbox"><input type="checkbox" name="es_recomendada" id="flagRecomendada" value="1"> 💡 Recomendar</label>
                 </div>
             </div>
             <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -340,7 +341,7 @@ function safeSetHTML(id, html) {
     if (el) {
         el.innerHTML = html;
     } else {
-        console.warn(`⚠️ Elemento #${id} no encontrado`);
+        console.warn(`️ Elemento #${id} no encontrado`);
     }
 }
 
@@ -494,7 +495,7 @@ async function cargarNoticias() {
                     <td><span class="badge badge-${n.estado}">${n.estado}</span></td>
                     <td>
                         ${n.es_hero ? '<span class="badge badge-hero">👑</span>' : ''}
-                        ${n.es_ticker ? '<span class="badge badge-ticker">📢</span>' : ''}
+                        ${n.es_ticker ? '<span class="badge badge-ticker"></span>' : ''}
                         ${n.es_popular ? '<span class="badge badge-popular">🔥</span>' : ''}
                         ${n.es_recomendada ? '<span class="badge badge-recomendada">💡</span>' : ''}
                         ${n.es_noticia_semana ? '<span class="badge" style="background: rgba(212, 175, 55, 0.15); color: #d4af37; font-weight:800;">⭐ SEMANA</span>' : ''}
@@ -661,7 +662,7 @@ document.getElementById('formNoticia').addEventListener('submit', async (e) => {
             showToast(`✅ Noticia ${action} correctamente`);
             console.log(`✅ Noticia ${action} con ID: ${data.id}`);
             
-            cancelarEdicion(false); // No mostrar toast de "cancelada"
+            cancelarEdicion(false);
             await cargarNoticias();
             
             const noticiasTab = document.querySelector('[data-tab="noticias"]');

@@ -7,9 +7,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
-    // ==========================================
     // 1. UTILIDADES DE RENDIMIENTO
-    // ==========================================
     const throttle = (func, limit) => {
         let inThrottle;
         return function(...args) {
@@ -35,9 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return conn && ['slow-2g', '2g', '3g'].includes(conn.effectiveType);
     };
 
-    // ==========================================
-    // 2. FECHA ACTUAL (Formato periodístico)
-    // ==========================================
+    // 2. FECHA ACTUAL
     const dateEl = document.getElementById('current-date');
     if (dateEl) {
         const now = new Date();
@@ -47,9 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dateEl.textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
     }
 
-    // ==========================================
     // 3. MENÚ MÓVIL INTELIGENTE
-    // ==========================================
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('nav-menu');
     
@@ -103,9 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // 4. EFECTOS DE SCROLL (OPTIMIZADOS)
-    // ==========================================
+    // 4. EFECTOS DE SCROLL
     const header = document.querySelector('.header');
     const backToTop = document.getElementById('backToTop');
     const progressBar = document.querySelector('.reading-progress-bar');
@@ -130,9 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // 5. ANIMACIONES DE ENTRADA CON INTERSECTION OBSERVER
-    // ==========================================
+    // 5. ANIMACIONES DE ENTRADA
     if (!isSlowConnection() && 'IntersectionObserver' in window) {
         const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
         const fadeInObserver = new IntersectionObserver((entries) => {
@@ -153,9 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // 6. LIGHTBOX PROFESIONAL MEJORADO
-    // ==========================================
+    // 6. LIGHTBOX PROFESIONAL
     window.openLightbox = function(el) {
         const img = el.tagName === 'IMG' ? el : el.querySelector('img');
         if (!img) return;
@@ -186,9 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => lb.remove(), 300);
     }
 
-    // ==========================================
-    // 7. SCROLL SUAVE PARA ANCLAS INTERNAS
-    // ==========================================
+    // 7. SCROLL SUAVE
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             const targetId = this.getAttribute('href');
@@ -204,9 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ==========================================
-    // 8. EFECTO PARALLAX SUAVE EN HERO (Solo desktop)
-    // ==========================================
+    // 8. EFECTO PARALLAX
     if (!isTouchDevice && window.innerWidth > 1024) {
         const heroImage = document.querySelector('.hero-image img');
         if (heroImage) {
@@ -217,9 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ==========================================
-    // 9. LAZY LOADING DE IMÁGENES CON OBSERVER
-    // ==========================================
+    // 9. LAZY LOADING
     if ('IntersectionObserver' in window) {
         const imgObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -236,16 +218,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('img[data-src]').forEach(img => imgObserver.observe(img));
     }
 
-    // ==========================================
     // 10. DETECCIÓN DE CONEXIÓN LENTA
-    // ==========================================
     if (isSlowConnection()) {
         document.body.classList.add('slow-connection');
     }
 
-    // ==========================================
     // 11. CONTADOR DE TIEMPO DE LECTURA
-    // ==========================================
     const articleContent = document.querySelector('.article-content');
     if (articleContent) {
         const text = articleContent.textContent;
@@ -256,9 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (readingTimeEl) readingTimeEl.textContent = `${readingTime} min de lectura`;
     }
 
-    // ==========================================
-    // 12. COMPARTIR EN REDES SOCIALES
-    // ==========================================
+    // 12. COMPARTIR EN REDES
     document.querySelectorAll('.share-button').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -276,9 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ==========================================
-    // 13. MARCAR NOTICIAS COMO LEÍDAS (LocalStorage)
-    // ==========================================
+    // 13. MARCAR NOTICIAS COMO LEÍDAS
     document.querySelectorAll('.news-card, .seccion-card, .featured-card, .archivo-card').forEach(card => {
         let noticiaId = null;
         const link = card.querySelector('a[href^="/noticia/"]');
@@ -298,9 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ==========================================
-    // 14. PRECARGAR IMÁGENES CRÍTICAS
-    // ==========================================
+    // 14. PRECARGAR IMÁGENES
     document.querySelectorAll('img[fetchpriority="high"]').forEach(img => {
         const preloadLink = document.createElement('link');
         preloadLink.rel = 'preload';
@@ -309,9 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.head.appendChild(preloadLink);
     });
 
-    // ==========================================
-    // 15. SOPORTE PARA NUEVOS ELEMENTOS (Widgets)
-    // ==========================================
+    // 15. SOPORTE PARA WIDGETS
     if (!isSlowConnection() && 'IntersectionObserver' in window) {
         const widgetObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -331,9 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // 16. MODO OSCURO / CLARO (NUEVO)
-    // ==========================================
+    // 16. MODO OSCURO / CLARO
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
     
@@ -349,7 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Verificar preferencia guardada o del sistema
     const savedTheme = localStorage.getItem('sexto-poder-theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         applyTheme(true);
@@ -364,9 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // 17. REGISTRO DE SERVICE WORKER (PWA) (NUEVO)
-    // ==========================================
+    // 17. REGISTRO DE SERVICE WORKER
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/static/service-worker.js')
@@ -375,9 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // 18. BÚSQUEDA INSTANTÁNEA (NUEVO)
-    // ==========================================
+    // 18. BÚSQUEDA INSTANTÁNEA
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
     
@@ -412,6 +375,106 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('click', (e) => {
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.style.display = 'none';
+            }
+        });
+    }
+
+    // ==========================================
+    // 19. AGREGADO: CONTROL DE RADIO EN VIVO
+    // ==========================================
+    const radioLiveBtn = document.getElementById('radioLiveBtn');
+    const radioPlayerFloat = document.getElementById('radioPlayerFloat');
+    const minimizeRadio = document.getElementById('minimizeRadio');
+    const radioAudio = document.getElementById('radioAudio');
+    const radioPlayPause = document.getElementById('radioPlayPause');
+    const radioVolume = document.getElementById('radioVolume');
+    const radioProgramName = document.getElementById('radioProgramName');
+    const radioStatusText = document.getElementById('radioStatusText');
+    const offlineMessage = document.getElementById('offlineMessage');
+
+    if (radioLiveBtn && radioPlayerFloat) {
+        let isRadioPlaying = false;
+        let isMinimized = false;
+
+        async function checkRadioStatus() {
+            try {
+                const response = await fetch('/api/radio/status');
+                const data = await response.json();
+                
+                if (data.is_live) {
+                    radioLiveBtn.className = 'radio-live-btn is-live';
+                    radioLiveBtn.querySelector('.btn-text').textContent = 'EN VIVO';
+                    radioPlayerFloat.className = 'radio-player-float is-live';
+                    radioStatusText.className = 'status-text live';
+                    radioProgramName.textContent = data.program_name || 'Sexto Poder Radio';
+                    if (data.stream_url && radioAudio.src !== data.stream_url) {
+                        radioAudio.src = data.stream_url;
+                    }
+                    radioPlayPause.disabled = false;
+                    radioPlayPause.className = 'play-btn is-live';
+                    if (offlineMessage) offlineMessage.style.display = 'none';
+                } else {
+                    radioLiveBtn.className = 'radio-live-btn is-offline';
+                    radioLiveBtn.querySelector('.btn-text').textContent = 'Radio';
+                    radioPlayerFloat.className = 'radio-player-float is-offline';
+                    radioStatusText.className = 'status-text offline';
+                    radioProgramName.textContent = 'Sexto Poder Radio';
+                    radioPlayPause.disabled = true;
+                    radioPlayPause.className = 'play-btn';
+                    radioPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+                    if (offlineMessage) offlineMessage.style.display = 'block';
+                    if (isRadioPlaying) {
+                        radioAudio.pause();
+                        isRadioPlaying = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Error al verificar estado de radio:', error);
+            }
+        }
+
+        checkRadioStatus();
+        setInterval(checkRadioStatus, 30000);
+
+        radioLiveBtn.addEventListener('click', () => {
+            if (isMinimized) {
+                radioPlayerFloat.classList.remove('minimized');
+                isMinimized = false;
+            } else {
+                radioPlayerFloat.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        });
+
+        minimizeRadio.addEventListener('click', () => {
+            radioPlayerFloat.classList.add('minimized');
+            isMinimized = true;
+        });
+
+        radioPlayPause.addEventListener('click', () => {
+            if (isRadioPlaying) {
+                radioAudio.pause();
+                radioPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+                isRadioPlaying = false;
+            } else {
+                radioAudio.play().then(() => {
+                    radioPlayPause.innerHTML = '<i class="fas fa-pause"></i>';
+                    isRadioPlaying = true;
+                }).catch(e => {
+                    console.log('Error al reproducir:', e);
+                    alert('No se pudo reproducir. Verifica que estés al aire.');
+                });
+            }
+        });
+
+        radioVolume.addEventListener('input', (e) => {
+            radioAudio.volume = e.target.value;
+        });
+
+        radioAudio.addEventListener('error', (e) => {
+            console.error('Error de audio:', e);
+            if (isRadioPlaying) {
+                radioPlayPause.innerHTML = '<i class="fas fa-play"></i>';
+                isRadioPlaying = false;
             }
         });
     }

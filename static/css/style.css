@@ -2,7 +2,7 @@
    SEXTO PODER BOLIVIA - PORTAL DE NOTICIAS
    Paleta: Azul Oscuro + Cian Eléctrico + Dorado
    Tipografía: Orbitron (Logo futurista)
-   Versión Final: Orden móvil con display:contents
+   Versión Final: Orden móvil con display:contents + RADIO EN VIVO
    ========================================== */
 
 :root {
@@ -54,17 +54,17 @@
 }
 
 body.dark-mode {
-    --bg-deep: #000000;
-    --bg-primary: #0a0a0a;
-    --bg-secondary: #111111;
-    --bg-card: #1a1a1a;
-    --bg-hover: #252525;
-    --bg-nav: #1f1f1f;
+    --bg-deep: #050d1a;
+    --bg-primary: #0a1628;
+    --bg-secondary: #0f1d32;
+    --bg-card: #152238;
+    --bg-hover: #1a2d4a;
+    --bg-nav: #1e3a5f;
     --text-primary: #ffffff;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --border-light: rgba(255, 255, 255, 0.1);
-    --border-medium: rgba(255, 255, 255, 0.2);
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-light: rgba(148, 163, 184, 0.15);
+    --border-medium: rgba(148, 163, 184, 0.25);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2148,3 +2148,127 @@ a:focus-visible, button:focus-visible {
 .hero-section, .seccion-card, .news-card, .archivo-card, .ultima-item, .recomendada-item {
     will-change: transform;
 }
+
+/* ==========================================
+   AGREGADO: SEXTO PODER RADIO EN VIVO
+   ========================================== */
+.radio-live-btn {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(148, 163, 184, 0.15);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-smooth);
+    font-family: var(--font-ui);
+    letter-spacing: 0.5px;
+}
+.radio-live-btn.is-live {
+    background: rgba(220, 38, 38, 0.15);
+    border-color: var(--red-news);
+    color: var(--red-news);
+    animation: pulse-border 2s infinite;
+}
+.radio-live-btn.is-live .live-dot {
+    background-color: var(--red-news);
+    animation: pulse-red 1.5s infinite;
+}
+.radio-live-btn.is-offline {
+    background: rgba(148, 163, 184, 0.1);
+    border-color: var(--border-light);
+    color: var(--text-muted);
+}
+.radio-live-btn.is-offline .live-dot {
+    background-color: var(--text-muted);
+    animation: none;
+    opacity: 0.5;
+}
+.radio-live-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.radio-live-btn.is-live:hover {
+    background: var(--red-news);
+    color: white;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
+}
+.radio-live-btn .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all var(--transition-smooth);
+}
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+@keyframes pulse-border {
+    0%, 100% { border-color: var(--red-news); }
+    50% { border-color: rgba(220, 38, 38, 0.3); }
+}
+
+.radio-player-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 9999;
+    padding: 16px;
+    display: block;
+    animation: slideUp 0.3s ease-out;
+    transition: all var(--transition-smooth);
+}
+.radio-player-float.is-live {
+    border-color: var(--red-news);
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.3);
+}
+.radio-player-float.is-offline {
+    opacity: 0.85;
+}
+.radio-player-float.minimized {
+    display: none;
+}
+.radio-player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+}
+.radio-player-header .status-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.radio-player-header .status-text.offline { color: var(--text-muted); }
+.radio-player-header .status-text.live { color: var(--red-news); }
+.radio-player-header .status-text .live-dot { width: 8px; height: 8px; border-radius: 50%; }
+.radio-player-header .status-text.live .live-dot { background-color: var(--red-news); animation: pulse-red 1.5s infinite; }
+.radio-player-header .status-text.offline .live-dot { background-color: var(--text-muted); opacity: 0.5; }
+
+.radio-player-controls { display: flex; align-items: center; gap: 12px; }
+.play-btn {
+    width: 44px; height: 44px; border-radius: 50%; background: var(--blue-accent); border: none; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--transition-fast); flex-shrink: 0;
+}
+.play-btn:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.5; }
+.play-btn:hover:not(:disabled) { transform: scale(1.1); box-shadow: 0 0 15px var(--blue-glow); }
+.play-btn.is-live { background: var(--red-news); }
+.play-btn.is-live:hover { box-shadow: 0 0 15px rgba(220, 38, 38, 0.5); }
+.volume-control { flex: 1; display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+.volume-control input[type="range"] { flex: 1; accent-color: var(--blue-accent); height: 4px; cursor: pointer; }
+.offline-message { text-align: center; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.85rem; margin-top: 12px; }
