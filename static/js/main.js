@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 19. AGREGADO: CONTROL DE RADIO EN VIVO (COMPACTO)
+    // 19. AGREGADO: CONTROL DE RADIO EN VIVO (COMPACTO - OCULTO CUANDO NO HAY TRANSMISIÓN)
     // ==========================================
     const radioLiveBtn = document.getElementById('radioLiveBtn');
     const radioPlayerFloat = document.getElementById('radioPlayerFloat');
@@ -440,11 +440,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 
                 if (data.is_live) {
-                    // ESTADO: EN VIVO
+                    // ✅ ESTADO: EN VIVO - MOSTRAR REPRODUCTOR
                     radioLiveBtn.className = 'radio-live-btn is-live';
                     radioLiveBtn.querySelector('.btn-text').textContent = 'EN VIVO';
                     
                     radioPlayerFloat.className = 'radio-player-float is-live';
+                    radioPlayerFloat.style.display = 'block'; // Mostrar reproductor
+                    
                     radioStatusText.className = 'status-text live';
                     radioProgramName.textContent = data.program_name || 'Sexto Poder Radio';
                     
@@ -459,11 +461,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (offlineMessage) offlineMessage.style.display = 'none';
                     
                 } else {
-                    // ESTADO: FUERA DEL AIRE
+                    // ❌ ESTADO: FUERA DEL AIRE - OCULTAR REPRODUCTOR COMPLETAMENTE
                     radioLiveBtn.className = 'radio-live-btn is-offline';
                     radioLiveBtn.querySelector('.btn-text').textContent = 'Radio';
                     
                     radioPlayerFloat.className = 'radio-player-float is-offline';
+                    radioPlayerFloat.style.display = 'none'; // OCULTAR reproductor
+                    
                     radioStatusText.className = 'status-text offline';
                     radioProgramName.textContent = 'Sexto Poder Radio';
                     
@@ -481,6 +485,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error al verificar estado de radio:', error);
+                // Si hay error, ocultar reproductor
+                radioPlayerFloat.style.display = 'none';
             }
         }
 
