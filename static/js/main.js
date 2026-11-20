@@ -1,7 +1,7 @@
 /**
  * SEXTO PODER BOLIVIA - Main JavaScript
- * Versión: 6.0.0 - Con Modo Oscuro, PWA, Búsqueda Instantánea y RADIO EN VIVO
- * Fecha: Octubre 2026
+ * Versión: 7.0 Clean Rewrite
+ * Incluye: Modo Oscuro, PWA, Búsqueda Instantánea, RADIO EN VIVO, Audio
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -154,36 +154,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 6. LIGHTBOX PROFESIONAL MEJORADO
+    // 6. LIGHTBOX GLOBAL (Sin fugas de memoria)
     // ==========================================
+    let lightbox = null;
+    
     window.openLightbox = function(el) {
         const img = el.tagName === 'IMG' ? el : el.querySelector('img');
         if (!img) return;
 
-        document.body.style.overflow = 'hidden';
-        const lb = document.createElement('div');
-        lb.className = 'lightbox active';
-        lb.setAttribute('role', 'dialog');
-        lb.setAttribute('aria-modal', 'true');
-        lb.setAttribute('aria-label', 'Imagen ampliada');
-        lb.innerHTML = `<img src="${img.src}" alt="${img.alt || 'Imagen ampliada'}">`;
-        
-        lb.addEventListener('click', (e) => {
-            if (e.target === lb) closeLightbox(lb);
-        });
+        if (!lightbox) {
+            lightbox = document.createElement('div');
+            lightbox.className = 'lightbox';
+            lightbox.setAttribute('role', 'dialog');
+            lightbox.setAttribute('aria-modal', 'true');
+            lightbox.setAttribute('aria-label', 'Imagen ampliada');
+            document.body.appendChild(lightbox);
+            
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) closeLightbox();
+            });
+        }
 
-        document.body.appendChild(lb);
-        const handleEsc = (e) => { if (e.key === 'Escape') closeLightbox(lb); };
+        lightbox.innerHTML = `<img src="${img.src}" alt="${img.alt || 'Imagen ampliada'}">`;
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        const handleEsc = (e) => { if (e.key === 'Escape') closeLightbox(); };
         document.addEventListener('keydown', handleEsc);
-        lb._escHandler = handleEsc;
-        lb.focus();
+        lightbox._escHandler = handleEsc;
     };
 
-    function closeLightbox(lb) {
+    function closeLightbox() {
+        if (!lightbox) return;
         document.body.style.overflow = '';
-        document.removeEventListener('keydown', lb._escHandler);
-        lb.style.opacity = '0';
-        setTimeout(() => lb.remove(), 300);
+        document.removeEventListener('keydown', lightbox._escHandler);
+        lightbox.classList.remove('active');
     }
 
     // ==========================================
@@ -332,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 16. MODO OSCURO / CLARO (NUEVO)
+    // 16. MODO OSCURO / CLARO
     // ==========================================
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
@@ -349,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Verificar preferencia guardada o del sistema
     const savedTheme = localStorage.getItem('sexto-poder-theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         applyTheme(true);
@@ -365,18 +369,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 17. REGISTRO DE SERVICE WORKER (PWA) (NUEVO)
+    // 17. REGISTRO DE SERVICE WORKER (PWA)
     // ==========================================
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/static/service-worker.js')
+            navigator.serviceWorker.register('/service-worker.js')
                 .then(registration => console.log('SW registrado:', registration.scope))
                 .catch(error => console.log('Fallo en registro SW:', error));
         });
     }
 
     // ==========================================
-    // 18. BÚSQUEDA INSTANTÁNEA (NUEVO)
+    // 18. BÚSQUEDA INSTANTÁNEA
     // ==========================================
     const searchInput = document.getElementById('searchInput');
     const searchResults = document.getElementById('searchResults');
@@ -417,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 19. AGREGADO: CONTROL DE RADIO EN VIVO (COMPACTO - OCULTO CUANDO NO HAY TRANSMISIÓN)
+    // 19. CONTROL DE RADIO EN VIVO
     // ==========================================
     const radioLiveBtn = document.getElementById('radioLiveBtn');
     const radioPlayerFloat = document.getElementById('radioPlayerFloat');
@@ -433,51 +437,44 @@ document.addEventListener('DOMContentLoaded', () => {
         let isRadioPlaying = false;
         let isMinimized = false;
 
-        // Función para verificar el estado de la radio
         async function checkRadioStatus() {
             try {
                 const response = await fetch('/api/radio/status');
                 const data = await response.json();
                 
                 if (data.is_live) {
-                    // ✅ ESTADO: EN VIVO - MOSTRAR REPRODUCTOR
                     radioLiveBtn.className = 'radio-live-btn is-live';
                     radioLiveBtn.querySelector('.btn-text').textContent = 'EN VIVO';
                     
                     radioPlayerFloat.className = 'radio-player-float is-live';
-                    radioPlayerFloat.style.display = 'block'; // Mostrar reproductor
+                    radioPlayerFloat.style.display = 'block';
                     
                     radioStatusText.className = 'status-text live';
                     radioProgramName.textContent = data.program_name || 'Sexto Poder Radio';
                     
-                    // Actualizar URL del stream si cambió
                     if (data.stream_url && radioAudio.src !== data.stream_url) {
                         radioAudio.src = data.stream_url;
                     }
                     
-                    // Activar controles
                     radioPlayPause.disabled = false;
                     radioPlayPause.className = 'play-btn is-live';
                     if (offlineMessage) offlineMessage.style.display = 'none';
                     
                 } else {
-                    // ❌ ESTADO: FUERA DEL AIRE - OCULTAR REPRODUCTOR COMPLETAMENTE
                     radioLiveBtn.className = 'radio-live-btn is-offline';
                     radioLiveBtn.querySelector('.btn-text').textContent = 'Radio';
                     
                     radioPlayerFloat.className = 'radio-player-float is-offline';
-                    radioPlayerFloat.style.display = 'none'; // OCULTAR reproductor
+                    radioPlayerFloat.style.display = 'none';
                     
                     radioStatusText.className = 'status-text offline';
                     radioProgramName.textContent = 'Sexto Poder Radio';
                     
-                    // Desactivar controles
                     radioPlayPause.disabled = true;
                     radioPlayPause.className = 'play-btn';
                     radioPlayPause.innerHTML = '<i class="fas fa-play"></i>';
                     if (offlineMessage) offlineMessage.style.display = 'block';
                     
-                    // Detener reproducción si estaba sonando
                     if (isRadioPlaying) {
                         radioAudio.pause();
                         isRadioPlaying = false;
@@ -485,33 +482,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Error al verificar estado de radio:', error);
-                // Si hay error, ocultar reproductor
                 radioPlayerFloat.style.display = 'none';
             }
         }
 
-        // Verificar al cargar y cada 30 segundos
         checkRadioStatus();
         setInterval(checkRadioStatus, 30000);
 
-        // Click en botón del header: mostrar/ocultar reproductor
         radioLiveBtn.addEventListener('click', () => {
             if (isMinimized) {
                 radioPlayerFloat.classList.remove('minimized');
                 isMinimized = false;
             } else {
-                // Si ya está visible, hacer scroll hacia él
                 radioPlayerFloat.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }
         });
 
-        // Minimizar reproductor
         minimizeRadio.addEventListener('click', () => {
             radioPlayerFloat.classList.add('minimized');
             isMinimized = true;
         });
 
-        // Control Play/Pause
         radioPlayPause.addEventListener('click', () => {
             if (isRadioPlaying) {
                 radioAudio.pause();
@@ -528,12 +519,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Control de Volumen
         radioVolume.addEventListener('input', (e) => {
             radioAudio.volume = e.target.value;
         });
 
-        // Manejar errores de audio
         radioAudio.addEventListener('error', (e) => {
             console.error('Error de audio:', e);
             if (isRadioPlaying) {

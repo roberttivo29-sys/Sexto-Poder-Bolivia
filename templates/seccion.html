@@ -7,7 +7,7 @@
     
     <!-- Barra de Ticker TITULARES -->
     {% if ticker %}
-    <div class="breaking-news-bar">
+    <div class="breaking-news-bar" role="marquee" aria-label="Titulares en movimiento">
         <div class="breaking-label">
             <span class="indicator"></span> TITULARES
         </div>
@@ -41,6 +41,9 @@
                 {% endif %}
                 {% if nota.video_corto %}
                 <div class="video-tag"><i class="fas fa-play"></i> Video</div>
+                {% endif %}
+                {% if nota.modo_ultima_hora %}
+                <div class="ultima-hora-tag"><i class="fas fa-bolt"></i> Última Hora</div>
                 {% endif %}
             </div>
             <div class="news-card-content">

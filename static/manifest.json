@@ -12,18 +12,40 @@
             "src": "/static/img/logo.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
             "src": "/static/img/logo.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "/static/img/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ],
-    "categories": ["news", "media"],
+    "categories": ["news", "media", "magazine"],
     "lang": "es-BO",
     "dir": "ltr",
     "scope": "/",
-    "prefer_related_applications": false
+    "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "Locales",
+            "short_name": "Locales",
+            "description": "Noticias locales de Bolivia",
+            "url": "/seccion/locales",
+            "icons": [{ "src": "/static/img/logo.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "Internacionales",
+            "short_name": "Internac.",
+            "description": "Noticias internacionales",
+            "url": "/seccion/internacionales",
+            "icons": [{ "src": "/static/img/logo.png", "sizes": "192x192" }]
+        }
+    ]
 }

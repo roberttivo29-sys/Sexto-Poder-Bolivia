@@ -5,17 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>{% block title %}Sexto Poder Bolivia | Periodismo Independiente{% endblock %}</title>
     <meta name="description" content="{% block description %}Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.{% endblock %}">
-    <meta name="theme-color" content="#0a1628">
+    <meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#050d1a" media="(prefers-color-scheme: dark)">
+    
+    <!-- SEO: Canonical URL -->
+    <link rel="canonical" href="{{ request.base_url }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="Sexto Poder Bolivia">
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='img/logo.png', _external=True) }}{% endblock %}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:locale" content="es_BO">
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ self.og_title() }}">
+    <meta name="twitter:description" content="{{ self.og_description() }}">
+    <meta name="twitter:image" content="{{ self.og_image() }}">
     
     <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sexto Poder">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.png') }}">
     
     <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}" type="image/png">
     
+    <!-- Preconnect para fuentes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=Source+Serif+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -23,17 +43,39 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_head %}{% endblock %}
+    
+    <!-- JSON-LD: Organización de Noticias -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsMediaOrganization",
+      "name": "Sexto Poder Bolivia",
+      "url": "{{ request.host_url }}",
+      "logo": "{{ url_for('static', filename='img/logo.png', _external=True) }}",
+      "description": "Portal de noticias independiente de Bolivia. Información sin censura, análisis profundo y la verdad que otros no cuentan.",
+      "sameAs": [
+        "https://www.facebook.com/profile.php?id=61589606326280",
+        "https://www.tiktok.com/@sexto.poder.boliv"
+      ],
+      "foundingDate": "2026",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "BO"
+      }
+    }
+    </script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
     
-    <div class="reading-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <!-- Barra de progreso de lectura (solo en artículos) -->
+    {% block reading_bar %}{% endblock %}
     
     <header class="header" role="banner">
         <div class="container">
             <div class="header-top">
                 <a href="/" class="logo" aria-label="Ir a la página de inicio">
                     <div class="logo-image-wrapper">
-                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder Bolivia" class="logo-image" width="56" height="56">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Sexto Poder Bolivia" class="logo-image" width="48" height="48">
                     </div>
                     <div class="logo-text">
                         <h1 class="logo-title">
@@ -44,7 +86,7 @@
                 </a>
                 
                 <div class="header-controls">
-                    <!-- AGREGADO: Botón Radio En Vivo (siempre visible, compacto) -->
+                    <!-- Botón Radio En Vivo -->
                     <button class="radio-live-btn is-offline" id="radioLiveBtn" aria-label="Radio Sexto Poder">
                         <span class="live-dot"></span>
                         <span class="btn-text">Radio</span>
@@ -52,7 +94,7 @@
                     
                     <div class="header-date">
                         <i class="far fa-calendar-alt" aria-hidden="true"></i>
-                        <time id="current-date">{{ now.strftime('%A, %d de %B de %Y') if now else 'Martes, 13 de octubre de 2026' }}</time>
+                        <time id="current-date">{{ fecha_actual }}</time>
                     </div>
                     
                     <!-- Toggle Modo Oscuro/Claro -->
@@ -79,7 +121,7 @@
         </div>
     </header>
 
-    <!-- MAIN CONTENT - SIN BOTTOM NAV -->
+    <!-- MAIN CONTENT -->
     <main role="main" id="main-content" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
@@ -130,7 +172,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; {% if now %}{{ now.year }}{% else %}2026{% endif %} Sexto Poder Bolivia. Todos los derechos reservados.</p>
+                <p>&copy; {{ year }} Sexto Poder Bolivia. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
@@ -140,7 +182,7 @@
         <i class="fas fa-arrow-up" aria-hidden="true"></i>
     </button>
     
-    <!-- AGREGADO: Reproductor de Radio Flotante COMPACTO (OCULTO POR DEFECTO) -->
+    <!-- Reproductor de Radio Flotante (stream desde BD) -->
     <div class="radio-player-float is-offline" id="radioPlayerFloat" style="display: none;">
         <div class="radio-player-header">
             <div class="status-text offline" id="radioStatusText">
@@ -153,7 +195,6 @@
         </div>
         <div id="radioPlayerContent">
             <audio id="radioAudio" preload="none">
-                <source src="https://sapircast.caster.fm:19246/lqiXc" type="audio/mpeg">
                 Tu navegador no soporta el elemento de audio.
             </audio>
             <div class="radio-player-controls">

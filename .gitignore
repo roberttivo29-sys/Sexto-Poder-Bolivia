@@ -1,19 +1,62 @@
+# ==========================================
+# SEXTO PODER BOLIVIA - .gitignore
+# ==========================================
+
 # Entorno virtual
 venv/
 env/
+.venv/
 
 # Archivos de Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
 
-# Base de datos y Logs
-*.log
+# Base de datos SQLite (NO subir a Git)
+*.db
 sexto_poder.db
+instance/
 
-# Archivos de entorno
+# Logs
+*.log
+app.log
+
+# Archivos de entorno (claves secretas)
 .env
+.env.local
 
-# Archivos subidos por usuarios
+# Archivos subidos por usuarios (imágenes/videos)
 static/img/uploads/*
 !static/img/uploads/.gitkeep
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Archivos de PythonAnywhere
+.pythonanywhere/
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache/
+
+# Coverage y testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Archivos de compilación
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Archivos de migración de BD (si usas Flask-Migrate)
+migrations/

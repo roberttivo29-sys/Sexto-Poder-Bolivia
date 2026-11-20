@@ -7,7 +7,7 @@
     
     <!-- Barra de Ticker TITULARES -->
     {% if ticker %}
-    <div class="breaking-news-bar">
+    <div class="breaking-news-bar" role="marquee" aria-label="Titulares en movimiento">
         <div class="breaking-label">
             <span class="indicator"></span> TITULARES
         </div>
@@ -24,7 +24,7 @@
     </div>
     {% endif %}
 
-    <!-- Layout Principal: 2 columnas (ORDEN ORIGINAL PARA DESKTOP) -->
+    <!-- Layout Principal: 2 columnas -->
     <div class="main-layout">
         
         <!-- COLUMNA IZQUIERDA: Hero + Semana + Recomendadas -->
@@ -39,6 +39,9 @@
                 <div class="hero-overlay"></div>
                 <div class="hero-content">
                     <span class="seccion-card-badge">{{ hero.seccion|replace('-', ' ')|title }}</span>
+                    {% if hero.modo_ultima_hora %}
+                    <span class="ultima-hora-badge">🔴 ÚLTIMA HORA</span>
+                    {% endif %}
                     <h2>{{ hero.titulo }}</h2>
                     {% if hero.resumen %}
                     <p class="lead">{{ hero.resumen[:150] }}...</p>
@@ -103,7 +106,7 @@
         <!-- COLUMNA DERECHA (SIDEBAR): Últimas + Caricatura + Redes -->
         <aside class="sidebar">
             
-            <!-- 4. Últimas Noticias (COMPACTO - SIN RELOJ) -->
+            <!-- 4. Últimas Noticias -->
             {% if ultimas_noticias %}
             <div class="widget widget-ultimas">
                 <h3 class="widget-title">

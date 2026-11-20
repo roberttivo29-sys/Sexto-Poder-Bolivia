@@ -2,6 +2,45 @@
 {% block title %}{{ noticia.titulo }} | Sexto Poder Bolivia{% endblock %}
 {% block description %}{{ noticia.resumen[:150] if noticia.resumen else noticia.titulo }}{% endblock %}
 
+<!-- SEO: Open Graph para artículo -->
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ noticia.titulo }}{% endblock %}
+{% block og_description %}{{ noticia.resumen[:150] if noticia.resumen else noticia.titulo }}{% endblock %}
+{% block og_image %}{{ noticia.imagen or url_for('static', filename='img/logo.png', _external=True) }}{% endblock %}
+
+{% block extra_head %}
+<!-- JSON-LD: NewsArticle para Google News -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "{{ noticia.titulo }}",
+  "image": ["{{ noticia.imagen or url_for('static', filename='img/logo.png', _external=True) }}"],
+  "datePublished": "{{ noticia.created_at.isoformat() if noticia.created_at else noticia.fecha }}",
+  "dateModified": "{{ noticia.updated_at.isoformat() if noticia.updated_at else noticia.fecha }}",
+  "author": {
+    "@type": "Organization",
+    "name": "Sexto Poder Bolivia",
+    "url": "{{ request.host_url }}"
+  },
+  "publisher": {
+    "@type": "NewsMediaOrganization",
+    "name": "Sexto Poder Bolivia",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "{{ url_for('static', filename='img/logo.png', _external=True) }}"
+    }
+  },
+  "description": "{{ noticia.resumen[:150] if noticia.resumen else noticia.titulo }}",
+  "url": "{{ request.url }}"
+}
+</script>
+{% endblock %}
+
+{% block reading_bar %}
+<div class="reading-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+{% endblock %}
+
 {% block content %}
 <article class="article-detail">
     
@@ -32,6 +71,11 @@
         {% if noticia.categoria %}
         <span><i class="fas fa-tag"></i> {{ noticia.categoria }}</span>
         {% endif %}
+        {% if noticia.modo_ultima_hora %}
+        <span style="background: rgba(220, 38, 38, 0.15); color: var(--red-news); border-color: var(--red-news);">
+            <i class="fas fa-bolt"></i> ÚLTIMA HORA
+        </span>
+        {% endif %}
     </div>
 
     <!-- Resumen (Lead) -->
@@ -41,10 +85,31 @@
 
     <!-- Desarrollo de la nota -->
     <div class="article-body-container">
-        <div class="article-content">
+        <div class="article-content" id="article-text">
             {{ noticia.desarrollo | safe }}
         </div>
     </div>
+
+    <!-- Noticias Relacionadas -->
+    {% if relacionadas %}
+    <section class="relacionadas-section">
+        <h3>Noticias Relacionadas</h3>
+        <div class="relacionadas-grid">
+            {% for rel in relacionadas %}
+            <a href="/noticia/{{ rel.id }}" class="relacionada-card">
+                {% if rel.imagen %}
+                <div class="relacionada-card-image">
+                    <img src="{{ rel.imagen }}" alt="{{ rel.titulo }}" loading="lazy">
+                </div>
+                {% endif %}
+                <div class="relacionada-card-content">
+                    <h4>{{ rel.titulo }}</h4>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
     <!-- Botón Volver -->
     <div class="back-link-container">
@@ -87,18 +152,9 @@
 
 {% block extra_scripts %}
 <script>
-// Función para Lightbox de imágenes
-function openLightbox(img) {
-    const lightbox = document.createElement('div');
-    lightbox.className = 'lightbox active';
-    lightbox.innerHTML = `<img src="${img.src}" alt="Imagen ampliada">`;
-    lightbox.onclick = () => lightbox.remove();
-    document.body.appendChild(lightbox);
-}
-
-// Funcionalidad de Audio (Web Speech API) - Compatible con móvil
+// Funcionalidad de Audio (Web Speech API) - Texto limpio
 document.addEventListener('DOMContentLoaded', () => {
-    const articleContent = document.querySelector('.article-content');
+    const articleContent = document.getElementById('article-text');
     if (!articleContent) return;
 
     const audioPlayer = document.getElementById('audioPlayer');
@@ -110,10 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPlaying = false;
     let currentSpeed = 1;
 
-    // Mostrar el reproductor si hay contenido
-    if (articleContent.innerText.trim().length > 50) {
+    // Extraer solo párrafos (no botones, fechas, etc.)
+    const parrafos = Array.from(articleContent.querySelectorAll('p'))
+        .map(p => p.innerText)
+        .join('. ');
+    
+    if (parrafos.trim().length > 50) {
         audioPlayer.classList.add('active');
-        speech.text = articleContent.innerText;
+        speech.text = parrafos;
         speech.lang = 'es-ES';
         speech.rate = 1;
     }

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SEXTO PODER BOLIVIA - Backend Flask v6.0
-Incluye: Hero, Ticker, Últimas, Semana, Recomendadas, Búsqueda, Audio, Auto-archivado y RADIO EN VIVO
+SEXTO PODER BOLIVIA - Backend Flask v7.0 (Clean Rewrite)
+Backend profesional para portal de noticias independiente.
+Incluye: Hero, Ticker, Últimas, Semana, Recomendadas, Búsqueda optimizada,
+Audio, Auto-archivado, RADIO EN VIVO, y seguridad robusta.
 """
 
 import os
@@ -10,17 +12,26 @@ import time
 import logging
 import traceback
 import json
-from datetime import datetime, timedelta
+import hmac
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, abort
+from flask import (
+    Flask, render_template, request, jsonify, session,
+    redirect, url_for, abort, send_from_directory
+)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
+# ==========================================
+# CONFIGURACIÓN BASE
+# ==========================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'img', 'uploads')
 DB_PATH = os.path.join(BASE_DIR, 'sexto_poder.db')
 
+# Logging profesional
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,31 +42,93 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ==========================================
+# APLICACIÓN FLASK
+# ==========================================
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'sexto-poder-2026-clave-secreta-robusta')
+
+# SECRET_KEY: En producción debe venir de variable de entorno
+# Para desarrollo local, usa una clave fuerte (cámbiala en PythonAnywhere)
+app.secret_key = os.environ.get(
+    'SECRET_KEY',
+    'cambia-esta-clave-en-produccion-2026-robusta-segura'
+)
+
+# Configuración de base de datos (SQLite para PythonAnywhere)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024  # 25MB máximo (videos)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 app.config['NOTICIAS_POR_PAGINA'] = 6
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_pre_ping': True,
-    'pool_recycle': 300,
-}
 
+# Cookies seguras
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# Crear carpeta de uploads si no existe
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 db = SQLAlchemy(app)
+
+# ==========================================
+# FECHAS EN ESPAÑOL (Nativo, sin locale)
+# ==========================================
+DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+MESES = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+]
+
+def fecha_espanol():
+    """Retorna la fecha actual en formato español."""
+    hoy = datetime.now(timezone.utc)
+    return f"{DIAS_SEMANA[hoy.weekday()]}, {hoy.day} de {MESES[hoy.month - 1]} de {hoy.year}"
+
+def now_utc():
+    """Retorna la hora actual en UTC (reemplaza datetime.utcnow() obsoleto)."""
+    return datetime.now(timezone.utc)
 
 @app.context_processor
 def inject_globals():
-    return {'now': datetime.now(), 'year': datetime.now().year}
+    """Inyecta variables globales en todos los templates."""
+    return {
+        'now': datetime.now(),
+        'year': datetime.now().year,
+        'fecha_actual': fecha_espanol()
+    }
 
+# ==========================================
+# SEGURIDAD ADMIN
+# ==========================================
 ADMIN_USER = os.environ.get('ADMIN_USER', 'tivodj')
-ADMIN_PASS = os.environ.get('ADMIN_PASS', 'sextopoder2025*')
 
+# Hash de contraseña (genera uno con: python -c "from werkzeug.security import generate_password_hash as g; print(g('TU_CLAVE'))")
+# Para desarrollo, usa este hash de ejemplo (contraseña: sextopoder2025*)
+ADMIN_PASS_HASH = os.environ.get(
+    'ADMIN_PASS_HASH',
+    generate_password_hash('sextopoder2025*')
+)
+
+# Fallback para compatibilidad (si no usas hash)
+ADMIN_PASS_PLAIN = os.environ.get('ADMIN_PASS')
+
+def check_admin(user, password):
+    """Verifica credenciales de admin con hash o comparación segura."""
+    if user != ADMIN_USER or not password:
+        return False
+    if ADMIN_PASS_HASH:
+        return check_password_hash(ADMIN_PASS_HASH, password)
+    # Fallback: comparación en tiempo constante (evita timing attacks)
+    return hmac.compare_digest(password, ADMIN_PASS_PLAIN or '')
+
+# ==========================================
+# MODELOS DE BASE DE DATOS
+# ==========================================
 class Noticia(db.Model):
+    """Modelo de noticias del portal."""
     __tablename__ = 'noticias'
+    
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(255), nullable=False, index=True)
     resumen = db.Column(db.Text, nullable=True)
@@ -66,23 +139,35 @@ class Noticia(db.Model):
     video_corto = db.Column(db.String(500), nullable=True)
     fecha = db.Column(db.String(50), nullable=True)
     estado = db.Column(db.String(20), default='activo', index=True)
+    
+    # Flags de portada
     es_hero = db.Column(db.Boolean, default=False, index=True)
     es_ticker = db.Column(db.Boolean, default=False, index=True)
     es_popular = db.Column(db.Boolean, default=False, index=True)
     es_noticia_semana = db.Column(db.Boolean, default=False, index=True)
     es_recomendada = db.Column(db.Boolean, default=False, index=True)
     modo_ultima_hora = db.Column(db.Boolean, default=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=now_utc, index=True)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
     def to_dict(self, include_content=False):
+        """Convierte la noticia a diccionario para API."""
         data = {
-            'id': self.id, 'titulo': self.titulo, 'resumen': self.resumen,
-            'seccion': self.seccion, 'categoria': self.categoria,
-            'imagen': self.imagen, 'video_corto': self.video_corto,
-            'fecha': self.fecha, 'estado': self.estado,
-            'es_hero': self.es_hero, 'es_ticker': self.es_ticker,
-            'es_popular': self.es_popular, 'es_noticia_semana': self.es_noticia_semana,
+            'id': self.id,
+            'titulo': self.titulo,
+            'resumen': self.resumen,
+            'seccion': self.seccion,
+            'categoria': self.categoria,
+            'imagen': self.imagen,
+            'video_corto': self.video_corto,
+            'fecha': self.fecha,
+            'estado': self.estado,
+            'es_hero': self.es_hero,
+            'es_ticker': self.es_ticker,
+            'es_popular': self.es_popular,
+            'es_noticia_semana': self.es_noticia_semana,
             'es_recomendada': self.es_recomendada,
             'modo_ultima_hora': self.modo_ultima_hora,
             'created_at': self.created_at.isoformat() if self.created_at else None
@@ -91,47 +176,61 @@ class Noticia(db.Model):
             data['desarrollo'] = self.desarrollo
         return data
 
+
 class Configuracion(db.Model):
+    """Modelo de configuraciones generales (caricatura, etc.)."""
     __tablename__ = 'configuracion'
+    
     id = db.Column(db.Integer, primary_key=True)
     clave = db.Column(db.String(50), unique=True, nullable=False, index=True)
     valor = db.Column(db.Text, nullable=True)
     texto = db.Column(db.Text, nullable=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
-# ==========================================
-# MODELO PARA RADIO EN VIVO
-# ==========================================
+
 class RadioConfig(db.Model):
+    """Modelo de configuración de radio en vivo."""
     __tablename__ = 'radio_config'
+    
     id = db.Column(db.Integer, primary_key=True)
     is_live = db.Column(db.Boolean, default=False)
     program_name = db.Column(db.String(100), default='Sexto Poder Radio')
     stream_url = db.Column(db.String(500), default='https://sapircast.caster.fm:19246/lqiXc')
     description = db.Column(db.String(300), default='Transmisión en vivo de Sexto Poder Bolivia')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
+
+# ==========================================
+# HELPERS
+# ==========================================
 def allowed_file(filename, allowed_extensions):
+    """Verifica si el archivo tiene una extensión permitida."""
     if not filename or '.' not in filename:
         return False
     return filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
+
 def guardar_archivo(file, tipo='imagen'):
+    """Guarda archivo subido (imagen o video) en el servidor."""
     if not file or not file.filename:
         return None
+    
     if tipo == 'imagen':
         allowed = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
     elif tipo == 'video':
         allowed = {'mp4', 'mov', 'webm'}
     else:
         raise ValueError(f"Tipo de archivo desconocido: {tipo}")
+    
     if not allowed_file(file.filename, allowed):
         raise ValueError(f"Formato no permitido. Extensiones válidas: {allowed}")
+    
     filename = secure_filename(file.filename)
     name, ext = os.path.splitext(filename)
     final_name = f"{name}_{int(time.time())}{ext}"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], final_name)
+    
     try:
         file.save(filepath)
         logger.info(f"✅ Archivo guardado: {final_name}")
@@ -140,14 +239,18 @@ def guardar_archivo(file, tipo='imagen'):
         logger.error(f"Error al guardar archivo: {e}")
         raise ValueError("Error al guardar el archivo en el servidor.")
 
+
 def parse_bool(value):
+    """Convierte valor a booleano de forma flexible."""
     if isinstance(value, bool):
         return value
     if value is None:
         return False
     return str(value).lower() in ['1', 'true', 'on', 'yes', 'si', 'sí']
 
+
 def login_required(f):
+    """Decorator para proteger rutas de admin."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_logged_in' not in session:
@@ -157,29 +260,39 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+# ==========================================
+# RUTAS PÚBLICAS
+# ==========================================
 @app.route('/')
 def index():
+    """Página principal del portal."""
     try:
+        # Hero principal
         hero = Noticia.query.filter_by(estado='activo', es_hero=True).order_by(Noticia.created_at.desc()).first()
         if not hero:
             hero = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).first()
 
+        # Ticker de titulares
         ticker = Noticia.query.filter_by(estado='activo', es_ticker=True).order_by(Noticia.created_at.desc()).limit(10).all()
         if not ticker:
             ticker = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(10).all()
 
-        ultimas_noticias = Noticia.query.filter_by(estado='activo', es_popular=True).order_by(Noticia.created_at.desc()).limit(4).all()
-        if not ultimas_noticias:
-            ultimas_noticias = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(4).all()
+        # Últimas noticias (las más recientes)
+        ultimas_noticias = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(4).all()
 
+        # Noticia de la semana
         noticia_semana = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).order_by(Noticia.created_at.desc()).first()
 
+        # Recomendadas
         recomendadas = Noticia.query.filter_by(estado='activo', es_recomendada=True).order_by(Noticia.created_at.desc()).limit(3).all()
         if not recomendadas:
             recomendadas = Noticia.query.filter_by(estado='activo').order_by(Noticia.created_at.desc()).limit(3).all()
 
+        # Caricatura del día
         caricatura = Configuracion.query.filter_by(clave='caricatura').first()
 
+        # Destacadas por sección
         secciones_featured = ['locales', 'internacionales', 'ciencia', 'espiritualidad', 'medicina-tradicional']
         destacadas_principal = []
         for sec in secciones_featured:
@@ -189,17 +302,28 @@ def index():
 
         return render_template(
             'index.html',
-            hero=hero, ticker=ticker, ultimas_noticias=ultimas_noticias,
-            noticia_semana=noticia_semana, recomendadas=recomendadas,
-            caricatura=caricatura, destacadas_principal=destacadas_principal
+            hero=hero,
+            ticker=ticker,
+            ultimas_noticias=ultimas_noticias,
+            noticia_semana=noticia_semana,
+            recomendadas=recomendadas,
+            caricatura=caricatura,
+            destacadas_principal=destacadas_principal
         )
     except Exception as e:
         logger.error(f"Error crítico en ruta / (index): {e}")
         logger.error(traceback.format_exc())
-        return render_template('index.html', hero=None, ticker=[], ultimas_noticias=[], noticia_semana=None, recomendadas=[], caricatura=None, destacadas_principal=[])
+        return render_template(
+            'index.html',
+            hero=None, ticker=[], ultimas_noticias=[],
+            noticia_semana=None, recomendadas=[],
+            caricatura=None, destacadas_principal=[]
+        )
+
 
 @app.route('/noticia/<int:noticia_id>')
 def detalle(noticia_id):
+    """Detalle de una noticia."""
     try:
         noticia = Noticia.query.get_or_404(noticia_id)
         relacionadas = Noticia.query.filter(
@@ -207,58 +331,101 @@ def detalle(noticia_id):
             Noticia.seccion == noticia.seccion,
             Noticia.id != noticia_id
         ).order_by(Noticia.created_at.desc()).limit(4).all()
-        return render_template('detalle.html', noticia=noticia, relacionadas=relacionadas, es_semana=noticia.es_noticia_semana)
+        return render_template(
+            'detalle.html',
+            noticia=noticia,
+            relacionadas=relacionadas,
+            es_semana=noticia.es_noticia_semana
+        )
     except Exception as e:
         logger.error(f"Error en ruta /noticia/{noticia_id}: {e}")
         abort(404)
 
+
 @app.route('/noticia-semana')
 def noticia_semana_detalle():
+    """Detalle de la noticia de la semana."""
     try:
-        noticia = Noticia.query.filter_by(estado='activo', es_noticia_semana=True).order_by(Noticia.created_at.desc()).first()
+        noticia = Noticia.query.filter_by(
+            estado='activo', es_noticia_semana=True
+        ).order_by(Noticia.created_at.desc()).first()
         if not noticia:
             abort(404)
-        return render_template('detalle.html', noticia=noticia, relacionadas=[], es_semana=True)
+        return render_template(
+            'detalle.html',
+            noticia=noticia,
+            relacionadas=[],
+            es_semana=True
+        )
     except Exception as e:
         logger.error(f"Error en noticia-semana: {e}")
         abort(404)
 
+
 @app.route('/seccion/<seccion>')
 def seccion(seccion):
+    """Listado de noticias por sección."""
     try:
-        secciones_validas = ['locales', 'internacionales', 'ciencia', 'espiritualidad', 'medicina-tradicional', 'semana']
+        secciones_validas = [
+            'locales', 'internacionales', 'ciencia',
+            'espiritualidad', 'medicina-tradicional', 'semana'
+        ]
         if seccion not in secciones_validas:
             abort(404)
+        
         page = request.args.get('page', 1, type=int)
-        noticias_paginadas = Noticia.query.filter_by(estado='activo', seccion=seccion)\
-            .order_by(Noticia.created_at.desc())\
-            .paginate(page=page, per_page=app.config['NOTICIAS_POR_PAGINA'], error_out=False)
-        return render_template('seccion.html', seccion=seccion, noticias=noticias_paginadas.items, pagination=noticias_paginadas)
+        noticias_paginadas = Noticia.query.filter_by(
+            estado='activo', seccion=seccion
+        ).order_by(Noticia.created_at.desc()).paginate(
+            page=page,
+            per_page=app.config['NOTICIAS_POR_PAGINA'],
+            error_out=False
+        )
+        return render_template(
+            'seccion.html',
+            seccion=seccion,
+            noticias=noticias_paginadas.items,
+            pagination=noticias_paginadas
+        )
     except Exception as e:
         logger.error(f"Error en ruta /seccion/{seccion}: {e}")
-        return render_template('seccion.html', seccion=seccion, noticias=[], pagination=None)
+        return render_template(
+            'seccion.html',
+            seccion=seccion,
+            noticias=[],
+            pagination=None
+        )
 
+
+# ==========================================
+# APIs PÚBLICAS
+# ==========================================
 @app.route('/api/buscar')
 def api_buscar():
+    """Búsqueda de noticias (optimizada: solo titulo + resumen)."""
     try:
         q = request.args.get('q', '').strip().lower()
         if not q or len(q) < 3:
             return jsonify([])
+        
+        # Búsqueda optimizada: solo titulo y resumen (no desarrollo)
         noticias = Noticia.query.filter(
             Noticia.estado == 'activo',
             db.or_(
                 Noticia.titulo.ilike(f'%{q}%'),
-                Noticia.resumen.ilike(f'%{q}%'),
-                Noticia.desarrollo.ilike(f'%{q}%')
+                Noticia.resumen.ilike(f'%{q}%')
             )
         ).order_by(Noticia.created_at.desc()).limit(20).all()
+        
         return jsonify([n.to_dict() for n in noticias])
     except Exception as e:
         logger.error(f"Error en API /api/buscar: {e}")
         return jsonify({'error': 'Error interno'}), 500
 
+
 @app.route('/api/noticia/<int:noticia_id>/texto')
 def api_noticia_texto(noticia_id):
+    """Obtiene el texto limpio de una noticia (para síntesis de voz)."""
     try:
         noticia = Noticia.query.get_or_404(noticia_id)
         texto_limpio = f"{noticia.titulo}. {noticia.resumen or ''}. {noticia.desarrollo or ''}"
@@ -267,33 +434,10 @@ def api_noticia_texto(noticia_id):
         logger.error(f"Error en API /api/noticia/{noticia_id}/texto: {e}")
         return jsonify({'error': 'Error interno'}), 500
 
-@app.route('/api/admin/archivar', methods=['POST'])
-@login_required
-def admin_trigger_archivar():
-    try:
-        ahora = datetime.utcnow()
-        archivadas = 0
-        TIEMPOS = {'locales': 48, 'internacionales': 48, 'ciencia': 240, 'espiritualidad': 240, 'medicina-tradicional': 240}
-        
-        for n in Noticia.query.filter_by(estado='activo').all():
-            if n.es_noticia_semana: 
-                continue
-            horas_max = TIEMPOS.get((n.seccion or '').lower(), 240)
-            if n.created_at and (ahora - n.created_at).total_seconds() / 3600 > horas_max:
-                n.estado = 'archivado'
-                archivadas += 1
-                
-        if archivadas > 0:
-            db.session.commit()
-            
-        return jsonify({'success': True, 'archivadas': archivadas})
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error al archivar manualmente: {e}")
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/noticias')
 def api_noticias():
+    """Lista de noticias (para consumo externo)."""
     try:
         seccion = request.args.get('seccion')
         limit = request.args.get('limit', 50, type=int)
@@ -306,21 +450,123 @@ def api_noticias():
         logger.error(f"Error en API /api/noticias: {e}")
         return jsonify({'error': 'Error interno del servidor'}), 500
 
+
 @app.route('/api/config')
 def api_config():
+    """Obtiene configuraciones generales."""
     try:
         configs = Configuracion.query.all()
-        return jsonify({c.clave: {'valor': c.valor, 'texto': c.texto} for c in configs})
+        return jsonify({
+            c.clave: {'valor': c.valor, 'texto': c.texto}
+            for c in configs
+        })
     except Exception as e:
         logger.error(f"Error en API /api/config: {e}")
         return jsonify({'error': 'Error interno del servidor'}), 500
 
+
+@app.route('/api/radio/status')
+def api_radio_status():
+    """Estado de la radio en vivo."""
+    config = RadioConfig.query.first()
+    if config:
+        return jsonify({
+            'is_live': config.is_live,
+            'program_name': config.program_name,
+            'stream_url': config.stream_url,
+            'description': config.description
+        })
+    return jsonify({'is_live': False})
+
+
 # ==========================================
-# RUTAS PARA RADIO EN VIVO
+# ARCHIVOS RAÍZ (SEO y PWA)
 # ==========================================
+@app.route('/robots.txt')
+def robots_txt():
+    """Sirve robots.txt desde static/."""
+    return send_from_directory('static', 'robots.txt', mimetype='text/plain')
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    """Sirve sitemap.xml desde static/."""
+    return send_from_directory('static', 'sitemap.xml', mimetype='application/xml')
+
+
+@app.route('/manifest.json')
+def manifest_json():
+    """Sirve manifest.json desde static/js/."""
+    return send_from_directory(
+        os.path.join('static', 'js'),
+        'manifest.json',
+        mimetype='application/manifest+json'
+    )
+
+
+@app.route('/service-worker.js')
+def service_worker_js():
+    """Sirve service-worker.js desde static/js/."""
+    return send_from_directory(
+        os.path.join('static', 'js'),
+        'service-worker.js',
+        mimetype='application/javascript'
+    )
+
+
+# ==========================================
+# RUTAS DE ADMIN
+# ==========================================
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Login del panel de administración."""
+    if request.method == 'POST':
+        try:
+            data = request.json if request.is_json else request.form
+            if check_admin(data.get('user', ''), data.get('pass', '')):
+                session['admin_logged_in'] = True
+                session.permanent = True
+                if request.is_json:
+                    return jsonify({'success': True})
+                return redirect(url_for('admin_dashboard'))
+            else:
+                if request.is_json:
+                    return jsonify({'error': 'Credenciales incorrectas'}), 401
+                return render_template(
+                    'admin.html',
+                    login_mode=True,
+                    error='Usuario o contraseña incorrectos.'
+                )
+        except Exception as e:
+            logger.error(f"Error en login admin: {e}")
+            if request.is_json:
+                return jsonify({'error': 'Error interno'}), 500
+            return render_template(
+                'admin.html',
+                login_mode=True,
+                error='Ocurrió un error inesperado.'
+            )
+    return render_template('admin.html', login_mode=True)
+
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    """Panel de administración."""
+    return render_template('admin.html', login_mode=False)
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Cerrar sesión de admin."""
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('admin_login'))
+
+
 @app.route('/admin/radio', methods=['GET', 'POST'])
 @login_required
 def admin_radio():
+    """Gestión de radio en vivo (GET devuelve JSON, no template)."""
     config = RadioConfig.query.first()
     if not config:
         config = RadioConfig()
@@ -332,80 +578,62 @@ def admin_radio():
         if action == 'toggle':
             config.is_live = not config.is_live
         else:
-            config.is_live = request.form.get('is_live') == 'on'
-            config.program_name = request.form.get('program_name', 'Sexto Poder Radio')
+            config.program_name = request.form.get('program_name', config.program_name)
             config.stream_url = request.form.get('stream_url', config.stream_url)
             config.description = request.form.get('description', config.description)
         
-        config.updated_at = datetime.utcnow()
+        config.updated_at = now_utc()
         db.session.commit()
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': True, 'is_live': config.is_live, 'program_name': config.program_name})
+            return jsonify({
+                'success': True,
+                'is_live': config.is_live,
+                'program_name': config.program_name
+            })
         
         return redirect(url_for('admin_radio'))
     
-    return render_template('admin_radio.html', config=config)
+    # GET devuelve JSON (no busca template inexistente)
+    return jsonify({
+        'is_live': config.is_live,
+        'program_name': config.program_name,
+        'stream_url': config.stream_url,
+        'description': config.description
+    })
 
-@app.route('/api/radio/status')
-def api_radio_status():
-    config = RadioConfig.query.first()
-    if config:
-        return jsonify({
-            'is_live': config.is_live,
-            'program_name': config.program_name,
-            'stream_url': config.stream_url,
-            'description': config.description
-        })
-    return jsonify({'is_live': False})
 
-@app.route('/admin/login', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        try:
-            data = request.json if request.is_json else request.form
-            if data.get('user') == ADMIN_USER and data.get('pass') == ADMIN_PASS:
-                session['admin_logged_in'] = True
-                session.permanent = True
-                if request.is_json:
-                    return jsonify({'success': True})
-                return redirect(url_for('admin_dashboard'))
-            else:
-                if request.is_json:
-                    return jsonify({'error': 'Credenciales incorrectas'}), 401
-                return render_template('admin.html', login_mode=True, error='Usuario o contraseña incorrectos.')
-        except Exception as e:
-            logger.error(f"Error en login admin: {e}")
-            if request.is_json:
-                return jsonify({'error': 'Error interno'}), 500
-            return render_template('admin.html', login_mode=True, error='Ocurrió un error inesperado.')
-    return render_template('admin.html', login_mode=True)
-
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    return render_template('admin.html', login_mode=False)
-
-@app.route('/admin/logout')
-def admin_logout():
-    session.pop('admin_logged_in', None)
-    return redirect(url_for('admin_login'))
-
+# ==========================================
+# APIs DE ADMIN
+# ==========================================
 @app.route('/api/admin/noticias', methods=['GET'])
 @login_required
 def admin_list_noticias():
+    """Lista todas las noticias (paginadas)."""
     try:
-        noticias = Noticia.query.order_by(Noticia.created_at.desc()).all()
-        return jsonify([n.to_dict() for n in noticias])
+        page = request.args.get('page', 1, type=int)
+        paginacion = Noticia.query.order_by(Noticia.created_at.desc()).paginate(
+            page=page,
+            per_page=50,
+            error_out=False
+        )
+        return jsonify({
+            'noticias': [n.to_dict() for n in paginacion.items],
+            'total': paginacion.total,
+            'pages': paginacion.pages,
+            'page': page
+        })
     except Exception as e:
         logger.error(f"Error al listar noticias en admin: {e}")
         return jsonify({'error': 'No se pudieron cargar las noticias'}), 500
 
+
 @app.route('/api/admin/noticias', methods=['POST'])
 @login_required
 def admin_create_noticia():
+    """Crear o actualizar noticia."""
     try:
-        logger.info(f" Recibiendo petición para crear/editar noticia")
+        logger.info("📤 Recibiendo petición para crear/editar noticia")
         data = request.form
         titulo = data.get('titulo', '').strip()
         seccion = data.get('seccion', '').strip()
@@ -421,40 +649,64 @@ def admin_create_noticia():
         if es_semana and not seccion:
             seccion = 'semana'
 
+        # Si es noticia de la semana, desactivar la anterior
         if es_semana:
-            Noticia.query.filter_by(es_noticia_semana=True).update({Noticia.es_noticia_semana: False})
+            Noticia.query.filter_by(es_noticia_semana=True).update({
+                Noticia.es_noticia_semana: False
+            })
             db.session.commit()
 
-        imagen_url = guardar_archivo(request.files.get('imagen'), 'imagen') if request.files.get('imagen') else None
-        video_url = guardar_archivo(request.files.get('video_corto'), 'video') if request.files.get('video_corto') else None
+        # Guardar archivos
+        imagen_url = None
+        video_url = None
+        try:
+            if request.files.get('imagen'):
+                imagen_url = guardar_archivo(request.files.get('imagen'), 'imagen')
+            if request.files.get('video_corto'):
+                video_url = guardar_archivo(request.files.get('video_corto'), 'video')
+        except ValueError as ve:
+            return jsonify({'error': str(ve)}), 400
 
         if noticia_id:
+            # Actualizar noticia existente
             noticia = Noticia.query.get_or_404(int(noticia_id))
             noticia.titulo = titulo
             noticia.resumen = data.get('resumen', '').strip()
             noticia.desarrollo = data.get('desarrollo', '').strip()
             noticia.seccion = seccion
             noticia.categoria = data.get('categoria', '').strip() or None
-            if imagen_url: noticia.imagen = imagen_url
-            if video_url: noticia.video_corto = video_url
-            noticia.fecha = data.get('fecha', datetime.now().strftime("%d/%m/%Y"))
+            if imagen_url:
+                noticia.imagen = imagen_url
+            if video_url:
+                noticia.video_corto = video_url
+            noticia.fecha = data.get('fecha', now_utc().strftime("%d/%m/%Y"))
             noticia.es_hero = parse_bool(data.get('es_hero'))
             noticia.es_ticker = parse_bool(data.get('es_ticker'))
             noticia.es_popular = parse_bool(data.get('es_popular'))
             noticia.es_noticia_semana = es_semana
             noticia.es_recomendada = parse_bool(data.get('es_recomendada'))
-            noticia.updated_at = datetime.utcnow()
+            noticia.modo_ultima_hora = parse_bool(data.get('modo_ultima_hora'))
+            noticia.updated_at = now_utc()
             db.session.commit()
             return jsonify({'success': True, 'id': noticia.id, 'action': 'update'}), 200
         else:
+            # Crear nueva noticia
             noticia = Noticia(
-                titulo=titulo, resumen=data.get('resumen', '').strip(), desarrollo=data.get('desarrollo', '').strip(),
-                seccion=seccion, categoria=data.get('categoria', '').strip() or None,
-                imagen=imagen_url, video_corto=video_url,
-                fecha=data.get('fecha', datetime.now().strftime("%d/%m/%Y")),
-                es_hero=parse_bool(data.get('es_hero')), es_ticker=parse_bool(data.get('es_ticker')),
-                es_popular=parse_bool(data.get('es_popular')), es_noticia_semana=es_semana,
-                es_recomendada=parse_bool(data.get('es_recomendada')), estado='activo'
+                titulo=titulo,
+                resumen=data.get('resumen', '').strip(),
+                desarrollo=data.get('desarrollo', '').strip(),
+                seccion=seccion,
+                categoria=data.get('categoria', '').strip() or None,
+                imagen=imagen_url,
+                video_corto=video_url,
+                fecha=data.get('fecha', now_utc().strftime("%d/%m/%Y")),
+                es_hero=parse_bool(data.get('es_hero')),
+                es_ticker=parse_bool(data.get('es_ticker')),
+                es_popular=parse_bool(data.get('es_popular')),
+                es_noticia_semana=es_semana,
+                es_recomendada=parse_bool(data.get('es_recomendada')),
+                modo_ultima_hora=parse_bool(data.get('modo_ultima_hora')),
+                estado='activo'
             )
             db.session.add(noticia)
             db.session.commit()
@@ -468,18 +720,22 @@ def admin_create_noticia():
         logger.error(f"Error al guardar noticia: {e}")
         return jsonify({'error': f'Error interno al guardar la noticia: {str(e)}'}), 500
 
+
 @app.route('/api/admin/noticias/<int:noticia_id>', methods=['GET'])
 @login_required
 def admin_get_noticia(noticia_id):
+    """Obtener noticia por ID."""
     try:
         noticia = Noticia.query.get_or_404(noticia_id)
         return jsonify(noticia.to_dict(include_content=True)), 200
     except Exception as e:
         return jsonify({'error': 'No se pudo cargar la noticia'}), 500
 
+
 @app.route('/api/admin/noticias/<int:noticia_id>', methods=['DELETE'])
 @login_required
 def admin_delete_noticia(noticia_id):
+    """Archivar noticia (soft delete)."""
     try:
         noticia = Noticia.query.get_or_404(noticia_id)
         noticia.estado = 'archivado'
@@ -489,60 +745,118 @@ def admin_delete_noticia(noticia_id):
         db.session.rollback()
         return jsonify({'error': 'No se pudo archivar la noticia'}), 500
 
+
 @app.route('/api/admin/config', methods=['POST'])
 @login_required
 def admin_update_config():
+    """Actualizar configuración general."""
     try:
         clave = request.form.get('clave')
         if not clave:
             return jsonify({'error': 'La clave de configuración es requerida'}), 400
+        
         config = Configuracion.query.filter_by(clave=clave).first()
         if not config:
             config = Configuracion(clave=clave)
             db.session.add(config)
+        
         config.valor = request.form.get('valor', config.valor or '')
         config.texto = request.form.get('texto', config.texto or '')
+        
         if request.files.get('archivo'):
-            config.valor = guardar_archivo(request.files.get('archivo'), 'imagen')
+            try:
+                config.valor = guardar_archivo(request.files.get('archivo'), 'imagen')
+            except ValueError as ve:
+                return jsonify({'error': str(ve)}), 400
+        
         db.session.commit()
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Error al guardar la configuración'}), 500
 
+
+@app.route('/api/admin/archivar', methods=['POST'])
+@login_required
+def admin_trigger_archivar():
+    """Auto-archivar noticias antiguas (para cron externo)."""
+    try:
+        ahora = now_utc()
+        archivadas = 0
+        TIEMPOS = {
+            'locales': 48,
+            'internacionales': 48,
+            'ciencia': 240,
+            'espiritualidad': 240,
+            'medicina-tradicional': 240
+        }
+        
+        for n in Noticia.query.filter_by(estado='activo').all():
+            if n.es_noticia_semana:
+                continue
+            horas_max = TIEMPOS.get((n.seccion or '').lower(), 240)
+            if n.created_at and (ahora - n.created_at).total_seconds() / 3600 > horas_max:
+                n.estado = 'archivado'
+                archivadas += 1
+        
+        if archivadas > 0:
+            db.session.commit()
+        
+        return jsonify({'success': True, 'archivadas': archivadas})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error al archivar manualmente: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ==========================================
+# MANEJO DE ERRORES
+# ==========================================
 @app.errorhandler(404)
 def not_found(error):
+    """Manejador de error 404."""
     if request.path.startswith('/api/'):
         return jsonify({'error': 'Recurso no encontrado'}), 404
     return render_template('404.html'), 404
 
+
 @app.errorhandler(500)
 def internal_error(error):
+    """Manejador de error 500."""
     db.session.rollback()
     if request.path.startswith('/api/'):
         return jsonify({'error': 'Error interno del servidor'}), 500
     return render_template('500.html'), 500
 
+
+# ==========================================
+# INICIALIZACIÓN DE BASE DE DATOS
+# ==========================================
 def init_db():
+    """Inicializa la base de datos y crea tablas si no existen."""
     with app.app_context():
         db.create_all()
-        import sqlite3
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
         
-        for col, default in [('es_noticia_semana', 0), ('es_recomendada', 0), ('modo_ultima_hora', 0)]:
-            try:
-                cursor.execute(f"ALTER TABLE noticias ADD COLUMN {col} BOOLEAN DEFAULT {default};")
-                conn.commit()
-            except sqlite3.OperationalError:
-                pass
-        conn.close()
+        # Agregar columnas faltantes si es necesario
+        from sqlalchemy import inspect, text
+        insp = inspect(db.engine)
+        if 'noticias' in insp.get_table_names():
+            cols = {c['name'] for c in insp.get_columns('noticias')}
+            for col in ['es_noticia_semana', 'es_recomendada', 'modo_ultima_hora']:
+                if col not in cols:
+                    try:
+                        db.session.execute(text(f"ALTER TABLE noticias ADD COLUMN {col} BOOLEAN DEFAULT 0"))
+                        db.session.commit()
+                    except Exception as e:
+                        logger.warning(f"Columna {col} ya existe o error: {e}")
         
+        # Crear configuración de caricatura si no existe
         if not Configuracion.query.filter_by(clave='caricatura').first():
             config = Configuracion(clave='caricatura', valor='', texto='Caricatura del día')
             db.session.add(config)
             db.session.commit()
-            
+        
+        # Crear configuración de radio si no existe
         if not RadioConfig.query.first():
             default_radio = RadioConfig(
                 is_live=False,
@@ -554,11 +868,15 @@ def init_db():
             db.session.commit()
             print("✅ Configuración de radio creada por defecto")
 
+
+# ==========================================
+# PUNTO DE ENTRADA
+# ==========================================
 if __name__ == '__main__':
     try:
         init_db()
         print("=" * 65)
-        print("   SEXTO PODER BOLIVIA - SERVIDOR INICIADO (v6.0 + RADIO)")
+        print("   SEXTO PODER BOLIVIA - SERVIDOR INICIADO (v7.0 Clean Rewrite)")
         print("=" * 65)
         app.run(debug=True, host='0.0.0.0', port=5000)
     except Exception as e:
